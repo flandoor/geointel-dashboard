@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import styles from './Settings.module.css';
 
 interface SettingsProps {
@@ -8,25 +8,102 @@ interface SettingsProps {
   onClose: () => void;
 }
 
+export interface AppSettings {
+  theme: 'dark' | 'light' | 'system';
+  autoRefresh: boolean;
+  refreshInterval: number;
+  notifications: boolean;
+  soundAlerts: boolean;
+  breakingNewsBadge: boolean;
+  compactView: boolean;
+  fontSize: 'small' | 'medium' | 'large';
+  language: string;
+}
+
+const defaultSettings: AppSettings = {
+  theme: 'dark',
+  autoRefresh: true,
+  refreshInterval: 5,
+  notifications: true,
+  soundAlerts: false,
+  breakingNewsBadge: true,
+  compactView: false,
+  fontSize: 'medium',
+  language: 'en',
+};
+
+let store: any = null;
+let loadedSettings: AppSettings = defaultSettings;
+
+async function initStore() {
+  if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+    try {
+      const { load } = await import('@tauri-apps/plugin-store');
+      store = await load('settings.json');
+    } catch (e) {
+      console.log('Store not available');
+    }
+  }
+}
+
+async function loadSettings(): Promise<AppSettings> {
+  try {
+    await initStore();
+    if (store) {
+      const saved = await store.get('appSettings');
+      if (saved) {
+        loadedSettings = { ...defaultSettings, ...saved };
+        return loadedSettings;
+      }
+    }
+  } catch (e) {
+    console.log('Could not load settings');
+  }
+  return defaultSettings;
+}
+
+async function saveSettingsToStore(settings: AppSettings): Promise<void> {
+  loadedSettings = settings;
+  if (store) {
+    try {
+      await store.set('appSettings', settings);
+      await store.save();
+    } catch (e) {
+      console.log('Could not save settings');
+    }
+  }
+}
+
+export function useSettings() {
+  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadSettings().then((s) => {
+      setSettings(s);
+      setLoading(false);
+    });
+  }, []);
+
+  const updateSetting = useCallback(<K extends keyof AppSettings>(
+    key: K,
+    value: AppSettings[K]
+  ) => {
+    setSettings((prev) => {
+      const newSettings = { ...prev, [key]: value };
+      saveSettingsToStore(newSettings);
+      return newSettings;
+    });
+  }, []);
+
+  return { settings, updateSetting, loading };
+}
+
 export default function Settings({ isOpen, onClose }: SettingsProps) {
   const [activeTab, setActiveTab] = useState('general');
-  const [settings, setSettings] = useState({
-    theme: 'dark',
-    autoRefresh: true,
-    refreshInterval: 5,
-    notifications: true,
-    soundAlerts: false,
-    breakingNewsBadge: true,
-    compactView: false,
-    fontSize: 'medium',
-    language: 'en',
-  });
+  const { settings, updateSetting, loading } = useSettings();
 
   if (!isOpen) return null;
-
-  const handleChange = (key: string, value: any) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
-  };
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -85,7 +162,9 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
           </nav>
 
           <div className={styles.panel}>
-            {activeTab === 'general' && (
+            {loading ? (
+              <div className={styles.loading}>Loading settings...</div>
+            ) : activeTab === 'general' && (
               <div className={styles.section}>
                 <h3>Data & Refresh</h3>
                 
@@ -97,7 +176,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   <input
                     type="checkbox"
                     checked={settings.autoRefresh}
-                    onChange={(e) => handleChange('autoRefresh', e.target.checked)}
+                    onChange={(e) => updateSetting('autoRefresh', e.target.checked)}
                     className={styles.toggle}
                   />
                 </label>
@@ -110,7 +189,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                     </span>
                     <select
                       value={settings.refreshInterval}
-                      onChange={(e) => handleChange('refreshInterval', Number(e.target.value))}
+                      onChange={(e) => updateSetting('refreshInterval', Number(e.target.value))}
                       className={styles.select}
                     >
                       <option value={1}>1 minute</option>
@@ -129,7 +208,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   </span>
                   <select
                     value={settings.language}
-                    onChange={(e) => handleChange('language', e.target.value)}
+                    onChange={(e) => updateSetting('language', e.target.value)}
                     className={styles.select}
                   >
                     <option value="en">English</option>
@@ -152,7 +231,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   </span>
                   <select
                     value={settings.theme}
-                    onChange={(e) => handleChange('theme', e.target.value)}
+                    onChange={(e) => updateSetting('theme', e.target.value as 'dark' | 'light' | 'system')}
                     className={styles.select}
                   >
                     <option value="dark">Dark</option>
@@ -168,7 +247,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   </span>
                   <select
                     value={settings.fontSize}
-                    onChange={(e) => handleChange('fontSize', e.target.value)}
+                    onChange={(e) => updateSetting('fontSize', e.target.value as 'small' | 'medium' | 'large')}
                     className={styles.select}
                   >
                     <option value="small">Small</option>
@@ -185,7 +264,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   <input
                     type="checkbox"
                     checked={settings.compactView}
-                    onChange={(e) => handleChange('compactView', e.target.checked)}
+                    onChange={(e) => updateSetting('compactView', e.target.checked)}
                     className={styles.toggle}
                   />
                 </label>
@@ -204,7 +283,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   <input
                     type="checkbox"
                     checked={settings.notifications}
-                    onChange={(e) => handleChange('notifications', e.target.checked)}
+                    onChange={(e) => updateSetting('notifications', e.target.checked)}
                     className={styles.toggle}
                   />
                 </label>
@@ -217,7 +296,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   <input
                     type="checkbox"
                     checked={settings.soundAlerts}
-                    onChange={(e) => handleChange('soundAlerts', e.target.checked)}
+                    onChange={(e) => updateSetting('soundAlerts', e.target.checked)}
                     className={styles.toggle}
                   />
                 </label>
@@ -230,7 +309,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   <input
                     type="checkbox"
                     checked={settings.breakingNewsBadge}
-                    onChange={(e) => handleChange('breakingNewsBadge', e.target.checked)}
+                    onChange={(e) => updateSetting('breakingNewsBadge', e.target.checked)}
                     className={styles.toggle}
                   />
                 </label>
@@ -273,8 +352,17 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         </div>
 
         <div className={styles.footer}>
-          <button className={styles.resetBtn}>Reset to defaults</button>
-          <button className={styles.saveBtn} onClick={onClose}>Save changes</button>
+          <button 
+            className={styles.resetBtn}
+            onClick={() => {
+              Object.entries(defaultSettings).forEach(([key, value]) => {
+                updateSetting(key as keyof AppSettings, value);
+              });
+            }}
+          >
+            Reset to defaults
+          </button>
+          <button className={styles.saveBtn} onClick={onClose}>Done</button>
         </div>
       </div>
     </div>
