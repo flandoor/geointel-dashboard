@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import NewsCard from '@/components/NewsCard';
 import SummaryTicker from '@/components/SummaryTicker';
 import MetricsPanel from '@/components/MetricsPanel';
+import Settings from '@/components/Settings';
 import { newsArticles } from '@/data/news';
 import { Category, Tag } from '@/types';
 import styles from './page.module.css';
@@ -13,6 +14,7 @@ import styles from './page.module.css';
 export default function Dashboard() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const activeFilters = (selectedCategory ? 1 : 0) + selectedTags.length;
 
@@ -57,7 +59,11 @@ export default function Dashboard() {
       />
 
       <main className={styles.main}>
-        <Header activeFilters={activeFilters} onClearFilters={clearFilters} />
+        <Header 
+          activeFilters={activeFilters} 
+          onClearFilters={clearFilters}
+          onSettingsClick={() => setSettingsOpen(true)}
+        />
 
         <div className={styles.content}>
           <div className={styles.topSection}>
@@ -126,6 +132,8 @@ export default function Dashboard() {
           )}
         </div>
       </main>
+
+      <Settings isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }
