@@ -3,7 +3,6 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import NewsCard from './components/NewsCard';
 import NewsDetail from './components/NewsDetail';
-import SummaryTicker from './components/SummaryTicker';
 import MetricsPanel from './components/MetricsPanel';
 import Settings from './components/Settings';
 import { useAppData } from './hooks/useAppData';
@@ -197,10 +196,6 @@ function App() {
         />
 
         <div className="content">
-          <div className="top-section">
-            <SummaryTicker />
-          </div>
-
           <MetricsPanel />
 
           {breakingNews.length > 0 && (
