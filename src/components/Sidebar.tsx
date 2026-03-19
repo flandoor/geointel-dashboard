@@ -12,7 +12,6 @@ interface SidebarProps {
   onCategoryChange: (category: string | null) => void;
   onTagToggle: (tag: string) => void;
   onFeedSelect: (feedId: string | null) => void;
-  lastSync: string;
 }
 
 export default function Sidebar({
@@ -25,7 +24,6 @@ export default function Sidebar({
   onCategoryChange,
   onTagToggle,
   onFeedSelect,
-  lastSync,
 }: SidebarProps) {
   const [isRSSExpanded, setIsRSSExpanded] = useState(false);
 
@@ -190,14 +188,6 @@ export default function Sidebar({
           )}
         </div>
       </nav>
-
-      <div className="sidebar-footer">
-        <div className="status">
-          <span className="status-dot" />
-          <span>System Online</span>
-        </div>
-        <p className="timestamp">Last sync: {lastSync}</p>
-      </div>
     </aside>
   );
 }

@@ -5,7 +5,7 @@ import NewsCard from './components/NewsCard';
 import NewsDetail from './components/NewsDetail';
 import MetricsPanel from './components/MetricsPanel';
 import Settings from './components/Settings';
-import { useAppData } from './hooks/useAppData';
+import { AppDataProvider, useAppData } from './hooks/useAppData';
 import { fetchAllFeeds } from './services/rssService';
 import type { NewsArticle } from './types';
 import './App.css';
@@ -40,10 +40,9 @@ async function saveArticles(articles: NewsArticle[]) {
   }
 }
 
-function App() {
+function AppContent() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(false);
-  const [lastSync, setLastSync] = useState('Never');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -61,7 +60,6 @@ function App() {
     try {
       const fetched = await fetchAllFeeds(appData.feeds);
       setArticles(fetched);
-      setLastSync(new Date().toLocaleTimeString());
       await saveArticles(fetched);
     } catch (error) {
       console.error('Error fetching news:', error);
@@ -74,11 +72,6 @@ function App() {
     loadSavedArticles().then(cached => {
       if (cached.length > 0) {
         setArticles(cached);
-        const lastFetch = cached[0]?.publishedAt;
-        if (lastFetch) {
-          const date = new Date(lastFetch);
-          setLastSync(date.toLocaleTimeString());
-        }
       }
       if (!hasFetched.current) {
         hasFetched.current = true;
@@ -179,7 +172,6 @@ function App() {
         onCategoryChange={handleCategoryChange}
         onTagToggle={handleTagToggle}
         onFeedSelect={handleFeedSelect}
-        lastSync={lastSync}
       />
 
       <main className="main-content">
@@ -267,6 +259,14 @@ function App() {
         <NewsDetail article={selectedArticle} onClose={handleCloseDetail} />
       )}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AppDataProvider>
+      <AppContent />
+    </AppDataProvider>
   );
 }
 
