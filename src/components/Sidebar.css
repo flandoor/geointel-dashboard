@@ -11,7 +11,7 @@
   z-index: 100;
 }
 
-.logo {
+.sidebar-logo {
   padding: 24px 20px;
   display: flex;
   align-items: center;
@@ -20,7 +20,7 @@
   position: relative;
 }
 
-.logo::after {
+.sidebar-logo::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -31,7 +31,7 @@
   opacity: 0.3;
 }
 
-.logoIcon {
+.logo-icon {
   width: 40px;
   height: 40px;
   display: flex;
@@ -39,12 +39,12 @@
   justify-content: center;
 }
 
-.logoText {
+.logo-text {
   display: flex;
   flex-direction: column;
 }
 
-.logoTitle {
+.logo-title {
   font-family: var(--font-display);
   font-size: 16px;
   font-weight: 700;
@@ -52,7 +52,7 @@
   color: var(--text-primary);
 }
 
-.logoSubtitle {
+.logo-subtitle {
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 1.5px;
@@ -60,18 +60,18 @@
   margin-top: 2px;
 }
 
-.nav {
+.sidebar-nav {
   flex: 1;
   overflow-y: auto;
   padding: 20px 0;
 }
 
-.section {
+.nav-section {
   padding: 0 16px;
   margin-bottom: 24px;
 }
 
-.sectionTitle {
+.nav-section-title {
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
@@ -83,14 +83,14 @@
   gap: 8px;
 }
 
-.categoryList {
+.category-list {
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.categoryItem {
+.category-item {
   width: 100%;
   display: flex;
   align-items: center;
@@ -107,38 +107,38 @@
   text-align: left;
 }
 
-.categoryItem:hover {
+.category-item:hover {
   background: var(--bg-tertiary);
   color: var(--text-primary);
 }
 
-.categoryItem.active {
+.category-item.active {
   background: var(--bg-card);
   color: var(--text-primary);
   box-shadow: inset 0 0 0 1px var(--border-accent);
 }
 
-.categoryItem.active svg {
+.category-item.active svg {
   color: var(--accent-blue);
 }
 
-.categoryItem[data-color="red"].active svg {
+.category-item[data-color="red"].active svg {
   color: var(--accent-red);
 }
 
-.categoryItem[data-color="amber"].active svg {
+.category-item[data-color="amber"].active svg {
   color: var(--accent-amber);
 }
 
-.categoryItem[data-color="violet"].active svg {
+.category-item[data-color="violet"].active svg {
   color: #8b5cf6;
 }
 
-.categoryItem[data-color="green"].active svg {
+.category-item[data-color="green"].active svg {
   color: var(--accent-green);
 }
 
-.count {
+.category-count {
   margin-left: auto;
   font-size: 11px;
   padding: 2px 6px;
@@ -147,19 +147,14 @@
   color: var(--text-muted);
 }
 
-.categoryItem.active .count {
-  background: var(--border-accent);
-  color: var(--text-secondary);
-}
-
-.tagCount {
+.tag-count {
   font-size: 9px;
   padding: 2px 6px;
   background: var(--bg-tertiary);
   border-radius: 4px;
 }
 
-.tagCloud {
+.tag-cloud {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -183,13 +178,13 @@
   color: var(--text-primary);
 }
 
-.tagActive {
+.tag-active {
   background: var(--accent-blue-glow);
   border-color: var(--accent-blue);
   color: var(--accent-blue);
 }
 
-.rssHeader {
+.rss-header {
   width: 100%;
   display: flex;
   align-items: center;
@@ -201,11 +196,8 @@
   margin-bottom: 12px;
 }
 
-.rssHeader .sectionTitle {
+.rss-header .nav-section-title {
   margin-bottom: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .chevron {
@@ -217,14 +209,14 @@
   transform: rotate(180deg);
 }
 
-.rssList {
+.rss-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
   animation: fadeIn 0.2s ease;
 }
 
-.rssItem {
+.rss-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -237,32 +229,20 @@
   transition: all 0.2s ease;
 }
 
-.rssItem:hover {
+.rss-item:hover {
   background: var(--bg-card);
   color: var(--text-primary);
 }
 
-.rssDot {
+.rss-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
 }
 
-.footer {
+.sidebar-footer {
   padding: 16px 20px;
   border-top: 1px solid var(--border-subtle);
-  position: relative;
-}
-
-.footer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 20px;
-  right: 20px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border-accent), transparent);
-  opacity: 0.5;
 }
 
 .status {
@@ -274,7 +254,7 @@
   margin-bottom: 4px;
 }
 
-.statusDot {
+.status-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -289,12 +269,11 @@
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }

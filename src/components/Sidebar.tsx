@@ -1,9 +1,7 @@
-'use client';
-
 import { useState } from 'react';
-import { categories, tags } from '@/data/news';
-import { Category, Tag } from '@/types';
-import styles from './Sidebar.module.css';
+import { categories, tags } from '../data/news';
+import type { Category, Tag } from '../types';
+import './Sidebar.css';
 
 interface SidebarProps {
   selectedCategory: Category | null;
@@ -61,28 +59,28 @@ export default function Sidebar({
   };
 
   return (
-    <aside className={styles.sidebar}>
-      <div className={styles.logo}>
-        <div className={styles.logoIcon}>
+    <aside className="sidebar">
+      <div className="sidebar-logo">
+        <div className="logo-icon">
           <svg width="32" height="32" viewBox="0 0 100 100" fill="none">
             <circle cx="50" cy="50" r="35" stroke="var(--accent-blue)" strokeWidth="3" />
             <circle cx="50" cy="50" r="25" stroke="var(--accent-red)" strokeWidth="2" />
             <circle cx="50" cy="50" r="5" fill="var(--text-primary)" />
           </svg>
         </div>
-        <div className={styles.logoText}>
-          <span className={styles.logoTitle}>GEOINTEL</span>
-          <span className={styles.logoSubtitle}>Intelligence Dashboard</span>
+        <div className="logo-text">
+          <span className="logo-title">GEOINTEL</span>
+          <span className="logo-subtitle">Intelligence Dashboard</span>
         </div>
       </div>
 
-      <nav className={styles.nav}>
-        <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>Categories</h3>
-          <ul className={styles.categoryList}>
+      <nav className="sidebar-nav">
+        <div className="nav-section">
+          <h3 className="nav-section-title">Categories</h3>
+          <ul className="category-list">
             <li>
               <button
-                className={`${styles.categoryItem} ${selectedCategory === null ? styles.active : ''}`}
+                className={`category-item ${selectedCategory === null ? 'active' : ''}`}
                 onClick={() => onCategoryChange(null)}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -92,19 +90,19 @@ export default function Sidebar({
                   <rect x="3" y="14" width="7" height="7" />
                 </svg>
                 <span>All News</span>
-                <span className={styles.count}>12</span>
+                <span className="category-count">12</span>
               </button>
             </li>
             {categories.map((cat) => (
               <li key={cat.id}>
                 <button
-                  className={`${styles.categoryItem} ${selectedCategory === cat.id ? styles.active : ''}`}
+                  className={`category-item ${selectedCategory === cat.id ? 'active' : ''}`}
                   onClick={() => onCategoryChange(cat.id)}
                   data-color={cat.color}
                 >
                   {categoryIcons[cat.id]}
                   <span>{cat.name}</span>
-                  <span className={styles.count}>
+                  <span className="category-count">
                     {cat.id === 'geopolitics' ? 4 : 
                      cat.id === 'military' ? 4 : 
                      cat.id === 'economy' ? 2 : 2}
@@ -115,16 +113,16 @@ export default function Sidebar({
           </ul>
         </div>
 
-        <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>
+        <div className="nav-section">
+          <h3 className="nav-section-title">
             <span>Tags</span>
-            <span className={styles.tagCount}>{tags.length}</span>
+            <span className="tag-count">{tags.length}</span>
           </h3>
-          <div className={styles.tagCloud}>
+          <div className="tag-cloud">
             {tags.map((tag) => (
               <button
                 key={tag.id}
-                className={`${styles.tag} ${selectedTags.includes(tag.id) ? styles.tagActive : ''}`}
+                className={`tag ${selectedTags.includes(tag.id) ? 'tag-active' : ''}`}
                 onClick={() => onTagToggle(tag.id)}
               >
                 {tag.name}
@@ -133,12 +131,12 @@ export default function Sidebar({
           </div>
         </div>
 
-        <div className={styles.section}>
+        <div className="nav-section">
           <button 
-            className={styles.rssHeader}
+            className="rss-header"
             onClick={() => setIsRSSExpanded(!isRSSExpanded)}
           >
-            <h3 className={styles.sectionTitle}>
+            <h3 className="nav-section-title">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M6.18 15.64a2.18 2.18 0 1 1 0 4.36 2.18 2.18 0 0 1 0-4.36m0-6.18a8.18 8.18 0 0 1 8.18 8.18m-8.18-12.18a12.18 12.18 0 1 0 12.18 12.18"/>
               </svg>
@@ -151,45 +149,37 @@ export default function Sidebar({
               fill="none" 
               stroke="currentColor" 
               strokeWidth="2"
-              className={`${styles.chevron} ${isRSSExpanded ? styles.expanded : ''}`}
+              className={`chevron ${isRSSExpanded ? 'expanded' : ''}`}
             >
               <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
           
           {isRSSExpanded && (
-            <div className={styles.rssList}>
-              <div className={styles.rssItem}>
-                <span className={styles.rssDot} style={{ background: 'var(--accent-blue)' }} />
+            <div className="rss-list">
+              <div className="rss-item">
+                <span className="rss-dot" style={{ background: 'var(--accent-blue)' }} />
                 <span>Reuters World</span>
               </div>
-              <div className={styles.rssItem}>
-                <span className={styles.rssDot} style={{ background: 'var(--accent-red)' }} />
+              <div className="rss-item">
+                <span className="rss-dot" style={{ background: 'var(--accent-red)' }} />
                 <span>Defense News</span>
               </div>
-              <div className={styles.rssItem}>
-                <span className={styles.rssDot} style={{ background: 'var(--accent-amber)' }} />
+              <div className="rss-item">
+                <span className="rss-dot" style={{ background: 'var(--accent-amber)' }} />
                 <span>Bloomberg</span>
-              </div>
-              <div className={styles.rssItem}>
-                <span className={styles.rssDot} style={{ background: 'var(--accent-green)' }} />
-                <span>Stratfor</span>
-              </div>
-              <div className={styles.rssItem}>
-                <span className={styles.rssDot} style={{ background: '#8b5cf6' }} />
-                <span>FT News</span>
               </div>
             </div>
           )}
         </div>
       </nav>
 
-      <div className={styles.footer}>
-        <div className={styles.status}>
-          <span className={styles.statusDot} />
+      <div className="sidebar-footer">
+        <div className="status">
+          <span className="status-dot" />
           <span>System Online</span>
         </div>
-        <p className={styles.timestamp}>Last sync: 3 min ago</p>
+        <p className="timestamp">Last sync: 3 min ago</p>
       </div>
     </aside>
   );

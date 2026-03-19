@@ -1,13 +1,13 @@
-.container {
+.app-container {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   background: var(--bg-primary);
 }
 
-.main {
+.main-content {
   flex: 1;
   margin-left: 280px;
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -15,10 +15,10 @@
 .content {
   flex: 1;
   padding: 24px 32px;
-  max-width: 1400px;
+  overflow-y: auto;
 }
 
-.topSection {
+.top-section {
   margin-bottom: 24px;
 }
 
@@ -26,7 +26,7 @@
   margin-top: 32px;
 }
 
-.sectionHeader {
+.section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -36,7 +36,7 @@
   position: relative;
 }
 
-.sectionHeader::after {
+.section-header::after {
   content: '';
   position: absolute;
   bottom: -1px;
@@ -46,7 +46,7 @@
   background: var(--accent-blue);
 }
 
-.sectionTitle {
+.section-title {
   font-family: var(--font-display);
   font-size: 18px;
   font-weight: 600;
@@ -56,7 +56,7 @@
   gap: 12px;
 }
 
-.breakingIndicator {
+.breaking-indicator {
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -74,19 +74,19 @@
   border: 1px solid var(--border-subtle);
 }
 
-.breakingGrid {
+.breaking-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
 }
 
-.newsGrid {
+.news-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
 }
 
-.emptyState {
+.empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -99,12 +99,12 @@
   margin-top: 40px;
 }
 
-.emptyState svg {
+.empty-state svg {
   color: var(--text-muted);
   margin-bottom: 20px;
 }
 
-.emptyState h3 {
+.empty-state h3 {
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: 600;
@@ -112,13 +112,13 @@
   margin-bottom: 8px;
 }
 
-.emptyState p {
+.empty-state p {
   font-size: 14px;
   color: var(--text-secondary);
   margin-bottom: 24px;
 }
 
-.clearButton {
+.empty-clear-btn {
   padding: 12px 24px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-accent);
@@ -130,7 +130,7 @@
   transition: all 0.2s ease;
 }
 
-.clearButton:hover {
+.empty-clear-btn:hover {
   background: var(--accent-blue);
   border-color: var(--accent-blue);
 }
@@ -145,32 +145,22 @@
 }
 
 @media (max-width: 1400px) {
-  .newsGrid {
+  .news-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 1200px) {
-  .main {
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  .main-content {
     margin-left: 0;
   }
 
-  .sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-  }
-
-  .content {
-    padding: 20px;
-  }
-}
-
-@media (max-width: 768px) {
-  .breakingGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .newsGrid {
+  .breaking-grid,
+  .news-grid {
     grid-template-columns: 1fr;
   }
 }

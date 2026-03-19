@@ -1,4 +1,4 @@
-import { NewsArticle, CategoryInfo, TagInfo } from '@/types';
+import type { NewsArticle, CategoryInfo, TagInfo } from '../types';
 
 export const newsArticles: NewsArticle[] = [
   {
@@ -164,16 +164,4 @@ export function formatDate(dateString: string): string {
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-}
-
-export function getCategoryColor(categoryId: string): string {
-  const colors: Record<string, string> = {
-    geopolitics: 'var(--accent-blue)',
-    military: 'var(--accent-red)',
-    economy: 'var(--accent-amber)',
-    technology: 'var(--accent-blue)',
-    diplomacy: '#8b5cf6',
-    security: 'var(--accent-green)',
-  };
-  return colors[categoryId] || 'var(--text-secondary)';
 }

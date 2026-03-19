@@ -1,7 +1,5 @@
-'use client';
-
 import { useState, useEffect, useCallback } from 'react';
-import styles from './Settings.module.css';
+import './Settings.css';
 
 interface SettingsProps {
   isOpen: boolean;
@@ -33,44 +31,15 @@ const defaultSettings: AppSettings = {
 };
 
 let store: any = null;
-let loadedSettings: AppSettings = defaultSettings;
 
 async function initStore() {
-  if (typeof window !== 'undefined' && (window as any).__TAURI__) {
-    try {
-      const { load } = await import('@tauri-apps/plugin-store');
-      store = await load('settings.json');
-    } catch (e) {
-      console.log('Store not available');
-    }
-  }
-}
-
-async function loadSettings(): Promise<AppSettings> {
+  if (store) return store;
   try {
-    await initStore();
-    if (store) {
-      const saved = await store.get('appSettings');
-      if (saved) {
-        loadedSettings = { ...defaultSettings, ...saved };
-        return loadedSettings;
-      }
-    }
-  } catch (e) {
-    console.log('Could not load settings');
-  }
-  return defaultSettings;
-}
-
-async function saveSettingsToStore(settings: AppSettings): Promise<void> {
-  loadedSettings = settings;
-  if (store) {
-    try {
-      await store.set('appSettings', settings);
-      await store.save();
-    } catch (e) {
-      console.log('Could not save settings');
-    }
+    const { load } = await import('@tauri-apps/plugin-store');
+    store = await load('settings.json');
+    return store;
+  } catch {
+    return null;
   }
 }
 
@@ -79,8 +48,13 @@ export function useSettings() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadSettings().then((s) => {
-      setSettings(s);
+    initStore().then(async (s) => {
+      if (s) {
+        const saved = await s.get('appSettings') as AppSettings | null;
+        if (saved) {
+          setSettings({ ...defaultSettings, ...saved });
+        }
+      }
       setLoading(false);
     });
   }, []);
@@ -91,7 +65,10 @@ export function useSettings() {
   ) => {
     setSettings((prev) => {
       const newSettings = { ...prev, [key]: value };
-      saveSettingsToStore(newSettings);
+      if (store) {
+        store.set('appSettings', newSettings);
+        store.save();
+      }
       return newSettings;
     });
   }, []);
@@ -106,21 +83,21 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   if (!isOpen) return null;
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.header}>
+    <div className="settings-overlay" onClick={onClose}>
+      <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="settings-header">
           <h2>Settings</h2>
-          <button className={styles.closeBtn} onClick={onClose}>
+          <button className="settings-close" onClick={onClose}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className={styles.content}>
-          <nav className={styles.tabs}>
+        <div className="settings-content">
+          <nav className="settings-tabs">
             <button
-              className={`${styles.tab} ${activeTab === 'general' ? styles.active : ''}`}
+              className={`settings-tab ${activeTab === 'general' ? 'active' : ''}`}
               onClick={() => setActiveTab('general')}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -130,7 +107,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
               General
             </button>
             <button
-              className={`${styles.tab} ${activeTab === 'appearance' ? styles.active : ''}`}
+              className={`settings-tab ${activeTab === 'appearance' ? 'active' : ''}`}
               onClick={() => setActiveTab('appearance')}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -140,7 +117,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
               Appearance
             </button>
             <button
-              className={`${styles.tab} ${activeTab === 'notifications' ? styles.active : ''}`}
+              className={`settings-tab ${activeTab === 'notifications' ? 'active' : ''}`}
               onClick={() => setActiveTab('notifications')}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -150,7 +127,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
               Notifications
             </button>
             <button
-              className={`${styles.tab} ${activeTab === 'about' ? styles.active : ''}`}
+              className={`settings-tab ${activeTab === 'about' ? 'active' : ''}`}
               onClick={() => setActiveTab('about')}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -161,36 +138,36 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
             </button>
           </nav>
 
-          <div className={styles.panel}>
+          <div className="settings-panel">
             {loading ? (
-              <div className={styles.loading}>Loading settings...</div>
+              <div className="settings-loading">Loading...</div>
             ) : activeTab === 'general' && (
-              <div className={styles.section}>
+              <div className="settings-section">
                 <h3>Data & Refresh</h3>
                 
-                <label className={styles.setting}>
+                <label className="settings-row">
                   <span>
-                    <span className={styles.label}>Auto-refresh feed</span>
-                    <span className={styles.description}>Automatically update news feed</span>
+                    <span className="settings-label">Auto-refresh feed</span>
+                    <span className="settings-desc">Automatically update news feed</span>
                   </span>
                   <input
                     type="checkbox"
                     checked={settings.autoRefresh}
                     onChange={(e) => updateSetting('autoRefresh', e.target.checked)}
-                    className={styles.toggle}
+                    className="settings-toggle"
                   />
                 </label>
 
                 {settings.autoRefresh && (
-                  <label className={styles.setting}>
+                  <label className="settings-row">
                     <span>
-                      <span className={styles.label}>Refresh interval</span>
-                      <span className={styles.description}>Time between updates</span>
+                      <span className="settings-label">Refresh interval</span>
+                      <span className="settings-desc">Time between updates</span>
                     </span>
                     <select
                       value={settings.refreshInterval}
                       onChange={(e) => updateSetting('refreshInterval', Number(e.target.value))}
-                      className={styles.select}
+                      className="settings-select"
                     >
                       <option value={1}>1 minute</option>
                       <option value={5}>5 minutes</option>
@@ -201,15 +178,15 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   </label>
                 )}
 
-                <label className={styles.setting}>
+                <label className="settings-row">
                   <span>
-                    <span className={styles.label}>Language</span>
-                    <span className={styles.description}>Interface language</span>
+                    <span className="settings-label">Language</span>
+                    <span className="settings-desc">Interface language</span>
                   </span>
                   <select
                     value={settings.language}
                     onChange={(e) => updateSetting('language', e.target.value)}
-                    className={styles.select}
+                    className="settings-select"
                   >
                     <option value="en">English</option>
                     <option value="es">Español</option>
@@ -221,18 +198,18 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
             )}
 
             {activeTab === 'appearance' && (
-              <div className={styles.section}>
+              <div className="settings-section">
                 <h3>Display</h3>
                 
-                <label className={styles.setting}>
+                <label className="settings-row">
                   <span>
-                    <span className={styles.label}>Theme</span>
-                    <span className={styles.description}>Color scheme</span>
+                    <span className="settings-label">Theme</span>
+                    <span className="settings-desc">Color scheme</span>
                   </span>
                   <select
                     value={settings.theme}
                     onChange={(e) => updateSetting('theme', e.target.value as 'dark' | 'light' | 'system')}
-                    className={styles.select}
+                    className="settings-select"
                   >
                     <option value="dark">Dark</option>
                     <option value="light">Light</option>
@@ -240,15 +217,15 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   </select>
                 </label>
 
-                <label className={styles.setting}>
+                <label className="settings-row">
                   <span>
-                    <span className={styles.label}>Font size</span>
-                    <span className={styles.description}>Base text size</span>
+                    <span className="settings-label">Font size</span>
+                    <span className="settings-desc">Base text size</span>
                   </span>
                   <select
                     value={settings.fontSize}
                     onChange={(e) => updateSetting('fontSize', e.target.value as 'small' | 'medium' | 'large')}
-                    className={styles.select}
+                    className="settings-select"
                   >
                     <option value="small">Small</option>
                     <option value="medium">Medium</option>
@@ -256,70 +233,70 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   </select>
                 </label>
 
-                <label className={styles.setting}>
+                <label className="settings-row">
                   <span>
-                    <span className={styles.label}>Compact view</span>
-                    <span className={styles.description}>Show more news in less space</span>
+                    <span className="settings-label">Compact view</span>
+                    <span className="settings-desc">Show more news in less space</span>
                   </span>
                   <input
                     type="checkbox"
                     checked={settings.compactView}
                     onChange={(e) => updateSetting('compactView', e.target.checked)}
-                    className={styles.toggle}
+                    className="settings-toggle"
                   />
                 </label>
               </div>
             )}
 
             {activeTab === 'notifications' && (
-              <div className={styles.section}>
+              <div className="settings-section">
                 <h3>Alerts & Notifications</h3>
                 
-                <label className={styles.setting}>
+                <label className="settings-row">
                   <span>
-                    <span className={styles.label}>Push notifications</span>
-                    <span className={styles.description}>Desktop notifications for breaking news</span>
+                    <span className="settings-label">Push notifications</span>
+                    <span className="settings-desc">Desktop notifications for breaking news</span>
                   </span>
                   <input
                     type="checkbox"
                     checked={settings.notifications}
                     onChange={(e) => updateSetting('notifications', e.target.checked)}
-                    className={styles.toggle}
+                    className="settings-toggle"
                   />
                 </label>
 
-                <label className={styles.setting}>
+                <label className="settings-row">
                   <span>
-                    <span className={styles.label}>Sound alerts</span>
-                    <span className={styles.description}>Play sound on breaking news</span>
+                    <span className="settings-label">Sound alerts</span>
+                    <span className="settings-desc">Play sound on breaking news</span>
                   </span>
                   <input
                     type="checkbox"
                     checked={settings.soundAlerts}
                     onChange={(e) => updateSetting('soundAlerts', e.target.checked)}
-                    className={styles.toggle}
+                    className="settings-toggle"
                   />
                 </label>
 
-                <label className={styles.setting}>
+                <label className="settings-row">
                   <span>
-                    <span className={styles.label}>Breaking news badge</span>
-                    <span className={styles.description}>Show badge in taskbar</span>
+                    <span className="settings-label">Breaking news badge</span>
+                    <span className="settings-desc">Show badge in taskbar</span>
                   </span>
                   <input
                     type="checkbox"
                     checked={settings.breakingNewsBadge}
                     onChange={(e) => updateSetting('breakingNewsBadge', e.target.checked)}
-                    className={styles.toggle}
+                    className="settings-toggle"
                   />
                 </label>
               </div>
             )}
 
             {activeTab === 'about' && (
-              <div className={styles.section}>
-                <div className={styles.aboutHeader}>
-                  <div className={styles.appIcon}>
+              <div className="settings-section">
+                <div className="about-header">
+                  <div className="about-icon">
                     <svg width="48" height="48" viewBox="0 0 100 100" fill="none">
                       <circle cx="50" cy="50" r="35" stroke="var(--accent-blue)" strokeWidth="3" />
                       <circle cx="50" cy="50" r="25" stroke="var(--accent-red)" strokeWidth="2" />
@@ -332,28 +309,27 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   </div>
                 </div>
 
-                <div className={styles.aboutInfo}>
+                <div className="about-info">
                   <p>
                     Real-time geopolitical intelligence and military news dashboard for 
                     security analysts and decision makers.
                   </p>
                 </div>
 
-                <div className={styles.techStack}>
-                  <span className={styles.techBadge}>Next.js</span>
-                  <span className={styles.techBadge}>React</span>
-                  <span className={styles.techBadge}>TypeScript</span>
-                  <span className={styles.techBadge}>Tauri</span>
-                  <span className={styles.techBadge}>Rust</span>
+                <div className="tech-stack">
+                  <span className="tech-badge">React 18</span>
+                  <span className="tech-badge">TypeScript</span>
+                  <span className="tech-badge">Tauri 2.0</span>
+                  <span className="tech-badge">Rust</span>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        <div className={styles.footer}>
+        <div className="settings-footer">
           <button 
-            className={styles.resetBtn}
+            className="settings-reset"
             onClick={() => {
               Object.entries(defaultSettings).forEach(([key, value]) => {
                 updateSetting(key as keyof AppSettings, value);
@@ -362,7 +338,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
           >
             Reset to defaults
           </button>
-          <button className={styles.saveBtn} onClick={onClose}>Done</button>
+          <button className="settings-save" onClick={onClose}>Done</button>
         </div>
       </div>
     </div>

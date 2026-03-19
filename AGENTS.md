@@ -1,8 +1,19 @@
 # GeoIntel Dashboard - Agent Guidelines
 
+## IMPORTANT: This is a Desktop Application
+
+This is a **Tauri desktop application** (not a web app). The UI runs in a native WebView window, not in a browser. Design decisions should prioritize desktop UX patterns.
+
+---
+
 ## Project Overview
 
-A geopolitical intelligence dashboard application built with Next.js 14 (App Router) and Tauri 2.0 for desktop. Features real-time news feeds, category/tag filtering, and a terminal-inspired dark UI.
+A geopolitical intelligence dashboard built with:
+- **React 18** + **TypeScript** + **Vite** (frontend)
+- **Tauri 2.0** + **Rust** (desktop shell)
+- **Tauri Store Plugin** for persistent settings
+
+The app runs as a native Windows/macOS/Linux application using WebView2 (Windows) or WebKit (macOS/Linux).
 
 ---
 
@@ -10,17 +21,36 @@ A geopolitical intelligence dashboard application built with Next.js 14 (App Rou
 
 ```bash
 # Development
-npm run dev              # Start Next.js dev server (http://localhost:3000)
-npm run dev:tauri        # Run as Tauri desktop app with hot reload
+npm run dev              # Start Vite dev server (http://localhost:1420)
+npm run dev:tauri        # Run app in Tauri dev mode (with hot reload)
 
 # Production Build
-npm run build            # Build Next.js frontend
-npm run build:tauri      # Build Tauri desktop executable
-npm run build:all        # Build both frontend and desktop app
+npm run build            # Build frontend to dist/
+npm run build:tauri       # Build Tauri desktop executable
+npm run build:all         # Build both frontend and desktop app
 
-# Desktop app location after build:
-# src-tauri/target/release/geopolitical-dashboard.exe
+# Executable location after build:
+# src-tauri/target/release/geopolitical-dashboard.exe (Windows)
 ```
+
+---
+
+## Desktop-Specific Guidelines
+
+### Window Management
+- App runs in a fixed window (min 1024x700)
+- Native window decorations (title bar, controls)
+- No responsive design needed - optimize for desktop viewport
+
+### Data Persistence
+- Use `@tauri-apps/plugin-store` for persistent settings
+- Settings auto-save to `settings.json`
+- No localStorage needed (Tauri store handles it)
+
+### Native Features
+- Window controls handled by OS
+- Notifications via Tauri notification API
+- System tray support available if needed
 
 ---
 
@@ -28,50 +58,43 @@ npm run build:all        # Build both frontend and desktop app
 
 ### TypeScript/React
 
-- **Strict Mode**: TypeScript strict mode is enabled
-- **'use client'**: All interactive components must have `'use client'` directive
-- **CSS Modules**: Use `.module.css` files for component styles (not inline styles or Tailwind)
-- **Functional Components**: Always use functional components with hooks
+- **Strict TypeScript**: No `any` types, define proper interfaces
+- **Functional Components**: Always use hooks for state/effects
+- **CSS Files**: Co-located with components (`.tsx` + `.css`)
 
 ### Naming Conventions
 
 ```
-Components:     PascalCase (e.g., NewsCard.tsx, SummaryTicker.tsx)
-CSS Modules:    Same as component (e.g., NewsCard.module.css)
-Hooks:         camelCase with 'use' prefix (e.g., useNewsFilter)
-Types/Interfaces: PascalCase (e.g., NewsArticle, Category)
-Files:          kebab-case for utilities (e.g., news-data.ts)
+Components:     PascalCase (e.g., NewsCard.tsx)
+CSS Files:      Same name as component (e.g., NewsCard.css)
+Hooks:         camelCase with 'use' prefix
+Types/Interfaces: PascalCase
 ```
 
 ### Import Order
 
 ```typescript
-// 1. React / Next.js
-import { useState, useMemo } from 'react';
-import NextLink from 'next/link';
+// 1. React
+import { useState, useEffect } from 'react';
 
-// 2. Absolute imports (src/*)
-import Header from '@/components/Header';
-import { newsArticles } from '@/data/news';
-import { Category } from '@/types';
+// 2. Tauri APIs
+import { load } from '@tauri-apps/plugin-store';
 
-// 3. Relative imports
-import styles from './Component.module.css';
+// 3. Local imports
+import Header from './components/Header';
+import { newsArticles } from './data/news';
+import type { NewsArticle } from './types';
+
+// 4. Styles
+import './App.css';
 ```
 
 ### CSS Guidelines
 
-- Use CSS variables for theming (defined in `globals.css`)
-- Variables follow pattern: `--bg-*`, `--text-*`, `--accent-*`
-- Dark theme colors: black/gray base with blue/red accents
-- Font families: `JetBrains Mono` for mono, `Syne` for display headings
-- Use `animation-delay` for staggered entrance effects
-
-### Error Handling
-
-- Always include proper TypeScript types for function parameters
-- Use `useMemo` for expensive computations to avoid unnecessary re-renders
-- Handle optional values explicitly (never use non-null assertion without justification)
+- Use CSS variables (defined in `index.css`)
+- Dark theme default (black/gray + blue/red accents)
+- Fonts: `JetBrains Mono` (mono), `Syne` (display)
+- Animations with `animation-delay` for stagger effects
 
 ---
 
@@ -81,54 +104,50 @@ import styles from './Component.module.css';
 
 ```
 src/
-├── app/                    # Next.js App Router
-│   ├── layout.tsx          # Root layout
-│   ├── page.tsx           # Main dashboard page
-│   ├── globals.css         # Global styles + CSS variables
-│   └── *.module.css        # Page-specific styles
-├── components/             # React components
-│   ├── Header.tsx/css      # Top navigation bar
-│   ├── Sidebar.tsx/css     # Category/tag navigation
-│   ├── NewsCard.tsx/css    # Article cards
-│   ├── MetricsPanel.tsx/css # Key indicators
-│   ├── SummaryTicker.tsx/css # Regional alerts ticker
-│   └── Settings.tsx/css    # Settings modal
+├── main.tsx              # React entry point
+├── App.tsx               # Main app component
+├── App.css               # App-level styles
+├── index.css             # Global styles + CSS variables
+├── components/           # React components
+│   ├── Header.tsx/css
+│   ├── Sidebar.tsx/css
+│   ├── NewsCard.tsx/css
+│   ├── MetricsPanel.tsx/css
+│   ├── SummaryTicker.tsx/css
+│   └── Settings.tsx/css
 ├── data/
-│   └── news.ts             # Mock data + utility functions
+│   └── news.ts           # Mock data + utilities
 └── types/
-    └── index.ts            # TypeScript interfaces
+    └── index.ts          # TypeScript interfaces
 ```
 
 ### State Management
 
-- Local component state with `useState`
-- Derived state with `useMemo`
-- Props drilling for parent-to-child communication
-- No external state library (Redux/Zustand) needed for current scope
+- Local state with `useState`
+- `useCallback` for event handlers
+- Tauri Store for persistent settings
+- No Redux/Zustand needed
 
 ---
 
-## Tauri Desktop App
+## Tauri Configuration
 
-### Configuration
-
-- Config file: `src-tauri/tauri.conf.json`
-- Rust code: `src-tauri/src/lib.rs` and `main.rs`
+- Config: `src-tauri/tauri.conf.json`
+- Rust code: `src-tauri/src/lib.rs` & `main.rs`
 - Icons: `src-tauri/icons/`
 - Capabilities: `src-tauri/capabilities/default.json`
 
-### Requirements for Tauri Build
+### Tauri Plugins Used
 
-- Rust toolchain (install via `rustup.rs`)
-- WebView2 runtime (Windows) or WebKit (macOS/Linux)
-- Run `npm run dev:tauri` to test desktop app
+- `@tauri-apps/plugin-store` - Persistent storage
+- `@tauri-apps/plugin-shell` - Open external links
 
 ---
 
 ## Important Notes
 
-1. **CSS Modules**: Always co-locate CSS files with components (Component.tsx + Component.module.css)
-2. **Type Safety**: Avoid `any` types; define proper interfaces in `src/types/index.ts`
-3. **Server Components**: Use `'use client'` for any component with hooks or event handlers
-4. **Icons**: Use inline SVGs instead of icon libraries for consistency
-5. **Git Workflow**: Commit changes with clear messages; push to remote after significant updates
+1. **No Browser APIs**: Don't assume browser features (localStorage, etc.) - use Tauri APIs instead
+2. **Desktop UX**: Design for mouse/keyboard, not touch
+3. **Window Size**: Fixed minimum size, no responsive breakpoints needed
+4. **Settings**: Must persist via Tauri Store, not localStorage
+5. **Build Target**: Always test with `npm run dev:tauri` before building executable

@@ -1,7 +1,5 @@
-'use client';
-
 import { useEffect, useState } from 'react';
-import styles from './SummaryTicker.module.css';
+import './SummaryTicker.css';
 
 interface TickerItem {
   region: string;
@@ -35,8 +33,8 @@ export default function SummaryTicker() {
   const current = tickerItems[currentIndex];
 
   return (
-    <div className={styles.ticker}>
-      <div className={styles.label}>
+    <div className="ticker">
+      <div className="ticker-label">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
           <line x1="12" y1="9" x2="12" y2="13" />
@@ -46,26 +44,23 @@ export default function SummaryTicker() {
       </div>
       
       <div 
-        className={styles.content}
+        className="ticker-content"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        <div 
-          className={`${styles.status} ${styles[current.status]}`}
-          key={`status-${currentIndex}`}
-        />
-        <span className={styles.region} key={`region-${currentIndex}`}>
+        <div className={`ticker-status ${current.status}`} key={`status-${currentIndex}`} />
+        <span className="ticker-region" key={`region-${currentIndex}`}>
           {current.region}
         </span>
-        <span className={styles.event} key={`event-${currentIndex}`}>
+        <span className="ticker-event" key={`event-${currentIndex}`}>
           {current.event}
         </span>
         
-        <div className={styles.indicators}>
+        <div className="ticker-indicators">
           {tickerItems.map((item, i) => (
             <button
               key={i}
-              className={`${styles.dot} ${i === currentIndex ? styles.active : ''} ${styles[item.status]}`}
+              className={`ticker-dot ${i === currentIndex ? 'active' : ''} ${item.status}`}
               onClick={() => setCurrentIndex(i)}
             />
           ))}

@@ -1,6 +1,4 @@
-'use client';
-
-import styles from './MetricsPanel.module.css';
+import './MetricsPanel.css';
 
 interface MetricCard {
   label: string;
@@ -19,32 +17,32 @@ const metrics: MetricCard[] = [
 
 export default function MetricsPanel() {
   return (
-    <div className={styles.panel}>
-      <div className={styles.header}>
-        <h3 className={styles.title}>
+    <div className="metrics-panel">
+      <div className="metrics-header">
+        <h3 className="metrics-title">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M3 3v18h18" />
             <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" />
           </svg>
           Key Indicators
         </h3>
-        <span className={styles.timestamp}>Updated 2m ago</span>
+        <span className="metrics-timestamp">Updated 2m ago</span>
       </div>
       
-      <div className={styles.grid}>
+      <div className="metrics-grid">
         {metrics.map((metric, i) => (
-          <div key={i} className={styles.card}>
-            <div className={styles.cardHeader}>
-              <span className={styles.region}>{metric.region}</span>
-              <span className={`${styles.trend} ${styles[metric.trend]}`}>
+          <div key={i} className="metric-card">
+            <div className="metric-header">
+              <span className="metric-region">{metric.region}</span>
+              <span className={`metric-trend ${metric.trend}`}>
                 {metric.trend === 'up' && '↑'}
                 {metric.trend === 'down' && '↓'}
                 {metric.trend === 'stable' && '→'}
                 {metric.change}
               </span>
             </div>
-            <div className={styles.value}>{metric.value}</div>
-            <div className={styles.label}>{metric.label}</div>
+            <div className="metric-value">{metric.value}</div>
+            <div className="metric-label">{metric.label}</div>
           </div>
         ))}
       </div>

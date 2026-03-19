@@ -1,17 +1,15 @@
-'use client';
+import { useState } from 'react';
+import Sidebar from './components/Sidebar';
+import Header from './components/Header';
+import NewsCard from './components/NewsCard';
+import SummaryTicker from './components/SummaryTicker';
+import MetricsPanel from './components/MetricsPanel';
+import Settings from './components/Settings';
+import { newsArticles } from './data/news';
+import type { Category, Tag } from './types';
+import './App.css';
 
-import { useState, useMemo } from 'react';
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
-import NewsCard from '@/components/NewsCard';
-import SummaryTicker from '@/components/SummaryTicker';
-import MetricsPanel from '@/components/MetricsPanel';
-import Settings from '@/components/Settings';
-import { newsArticles } from '@/data/news';
-import { Category, Tag } from '@/types';
-import styles from './page.module.css';
-
-export default function Dashboard() {
+function App() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -33,24 +31,22 @@ export default function Dashboard() {
     setSelectedTags([]);
   };
 
-  const filteredArticles = useMemo(() => {
-    return newsArticles.filter((article) => {
-      if (selectedCategory && article.category !== selectedCategory) {
-        return false;
-      }
-      if (selectedTags.length > 0) {
-        const hasMatchingTag = article.tags.some((tag) => selectedTags.includes(tag));
-        if (!hasMatchingTag) return false;
-      }
-      return true;
-    });
-  }, [selectedCategory, selectedTags]);
+  const filteredArticles = newsArticles.filter((article) => {
+    if (selectedCategory && article.category !== selectedCategory) {
+      return false;
+    }
+    if (selectedTags.length > 0) {
+      const hasMatchingTag = article.tags.some((tag) => selectedTags.includes(tag));
+      if (!hasMatchingTag) return false;
+    }
+    return true;
+  });
 
   const breakingNews = filteredArticles.filter((a) => a.isBreaking);
   const regularNews = filteredArticles.filter((a) => !a.isBreaking);
 
   return (
-    <div className={styles.container}>
+    <div className="app-container">
       <Sidebar
         selectedCategory={selectedCategory}
         selectedTags={selectedTags}
@@ -58,30 +54,30 @@ export default function Dashboard() {
         onTagToggle={handleTagToggle}
       />
 
-      <main className={styles.main}>
+      <main className="main-content">
         <Header 
           activeFilters={activeFilters} 
           onClearFilters={clearFilters}
           onSettingsClick={() => setSettingsOpen(true)}
         />
 
-        <div className={styles.content}>
-          <div className={styles.topSection}>
+        <div className="content">
+          <div className="top-section">
             <SummaryTicker />
           </div>
 
           <MetricsPanel />
 
           {breakingNews.length > 0 && (
-            <section className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>
-                  <span className={styles.breakingIndicator} />
+            <section className="section">
+              <div className="section-header">
+                <h2 className="section-title">
+                  <span className="breaking-indicator" />
                   Breaking News
                 </h2>
-                <span className={styles.count}>{breakingNews.length} stories</span>
+                <span className="count">{breakingNews.length} stories</span>
               </div>
-              <div className={styles.breakingGrid}>
+              <div className="breaking-grid">
                 {breakingNews.map((article, index) => (
                   <NewsCard
                     key={article.id}
@@ -94,17 +90,17 @@ export default function Dashboard() {
             </section>
           )}
 
-          <section className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>
+          <section className="section">
+            <div className="section-header">
+              <h2 className="section-title">
                 {selectedCategory 
                   ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Intelligence`
                   : 'All Intelligence Feed'
                 }
               </h2>
-              <span className={styles.count}>{regularNews.length} stories</span>
+              <span className="count">{regularNews.length} stories</span>
             </div>
-            <div className={styles.newsGrid}>
+            <div className="news-grid">
               {regularNews.map((article, index) => (
                 <NewsCard
                   key={article.id}
@@ -116,7 +112,7 @@ export default function Dashboard() {
           </section>
 
           {filteredArticles.length === 0 && (
-            <div className={styles.emptyState}>
+            <div className="empty-state">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <circle cx="12" cy="12" r="10" />
                 <path d="M16 16s-1.5-2-4-2-4 2-4 2" />
@@ -125,7 +121,7 @@ export default function Dashboard() {
               </svg>
               <h3>No results found</h3>
               <p>Try adjusting your filters to see more content</p>
-              <button onClick={clearFilters} className={styles.clearButton}>
+              <button onClick={clearFilters} className="empty-clear-btn">
                 Clear all filters
               </button>
             </div>
@@ -137,3 +133,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+export default App;

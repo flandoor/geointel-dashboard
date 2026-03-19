@@ -8,7 +8,6 @@ export interface NewsArticle {
   publishedAt: string;
   isBreaking?: boolean;
   readTime?: number;
-  url?: string;
 }
 
 export type Category = 
@@ -36,14 +35,6 @@ export type Tag =
   | 'sanctions'
   | 'elections'
   | 'trade';
-
-export interface Feed {
-  id: string;
-  name: string;
-  url: string;
-  category: Category;
-  lastUpdated: string;
-}
 
 export interface CategoryInfo {
   id: Category;
