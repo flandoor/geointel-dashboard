@@ -170,19 +170,20 @@ export async function fetchRSSFeed(feed: FeedInfo): Promise<NewsArticle[]> {
         }
       }
       
-      const description = getTextContent(item, 'description') || getTextContent(item, 'summary') || getTextContent(item, 'content:encoded') || getTextContent(item, 'content') || '';
+      const contentEncoded = getTextContent(item, 'content:encoded') || getTextContent(item, 'content') || '';
+      const description = getTextContent(item, 'description') || getTextContent(item, 'summary') || '';
       const pubDate = getTextContent(item, 'pubDate') || getTextContent(item, 'published') || getTextContent(item, 'updated') || '';
       
       if (!title) return;
 
-      const cleanDescription = description
+      const fullContent = contentEncoded || description;
+      const cleanDescription = fullContent
         .replace(/<[^>]*>/g, ' ')
         .replace(/&[a-z]+;/gi, ' ')
         .replace(/\s+/g, ' ')
         .trim();
 
-      const summary = cleanDescription.substring(0, 300);
-      const fullContent = description;
+      const summary = cleanDescription;
 
       const category = getCategoryFromTitle(title, feed.category);
       const tags = extractTags(title, summary);

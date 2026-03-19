@@ -50,6 +50,7 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
   const [selectedFeed, setSelectedFeed] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const hasFetched = useRef(false);
   const feedsCountRef = useRef(0);
 
@@ -117,6 +118,7 @@ function App() {
     setSelectedCategory(null);
     setSelectedTags([]);
     setSelectedFeed(null);
+    setSearchQuery('');
   };
 
   const handleFeedSelect = (feedId: string | null) => {
@@ -132,6 +134,16 @@ function App() {
   };
 
   const filteredArticles = articles.filter((article) => {
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = 
+        article.title.toLowerCase().includes(query) ||
+        article.summary.toLowerCase().includes(query) ||
+        article.source.toLowerCase().includes(query) ||
+        article.tags.some(tag => tag.toLowerCase().includes(query)) ||
+        article.category.toLowerCase().includes(query);
+      if (!matchesSearch) return false;
+    }
     if (selectedCategory && article.category !== selectedCategory) {
       return false;
     }
@@ -180,6 +192,8 @@ function App() {
           onRefresh={fetchNews}
           feedCount={appData.feeds.filter(f => f.enabled).length}
           articleCount={articles.length}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
         />
 
         <div className="content">
