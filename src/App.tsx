@@ -1,26 +1,58 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import NewsCard from './components/NewsCard';
 import SummaryTicker from './components/SummaryTicker';
 import MetricsPanel from './components/MetricsPanel';
 import Settings from './components/Settings';
-import { newsArticles } from './data/news';
-import type { Category, Tag } from './types';
+import { useAppData } from './hooks/useAppData';
+import { fetchAllFeeds } from './services/rssService';
+import type { NewsArticle } from './types';
 import './App.css';
 
 function App() {
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [lastSync, setLastSync] = useState('Never');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const { data: appData, loading: dataLoading } = useAppData();
+
+  const fetchNews = useCallback(async () => {
+    if (dataLoading) return;
+    setLoading(true);
+    try {
+      const fetched = await fetchAllFeeds(appData.feeds);
+      setArticles(fetched);
+      setLastSync(new Date().toLocaleTimeString());
+    } catch (error) {
+      console.error('Error fetching news:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [appData.feeds, dataLoading]);
+
+  useEffect(() => {
+    fetchNews();
+    const interval = setInterval(fetchNews, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchNews]);
+
+  useEffect(() => {
+    if (!dataLoading && appData.feeds.length > 0) {
+      fetchNews();
+    }
+  }, [appData.feeds, dataLoading]);
 
   const activeFilters = (selectedCategory ? 1 : 0) + selectedTags.length;
 
-  const handleCategoryChange = (category: Category | null) => {
+  const handleCategoryChange = (category: string | null) => {
     setSelectedCategory(category);
   };
 
-  const handleTagToggle = (tag: Tag) => {
+  const handleTagToggle = (tag: string) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
@@ -31,7 +63,7 @@ function App() {
     setSelectedTags([]);
   };
 
-  const filteredArticles = newsArticles.filter((article) => {
+  const filteredArticles = articles.filter((article) => {
     if (selectedCategory && article.category !== selectedCategory) {
       return false;
     }
@@ -45,13 +77,25 @@ function App() {
   const breakingNews = filteredArticles.filter((a) => a.isBreaking);
   const regularNews = filteredArticles.filter((a) => !a.isBreaking);
 
+  if (dataLoading) {
+    return (
+      <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: 'var(--text-muted)' }}>Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
       <Sidebar
+        categories={appData.categories}
+        tags={appData.tags}
+        feeds={appData.feeds}
         selectedCategory={selectedCategory}
         selectedTags={selectedTags}
         onCategoryChange={handleCategoryChange}
         onTagToggle={handleTagToggle}
+        lastSync={lastSync}
       />
 
       <main className="main-content">
@@ -59,6 +103,10 @@ function App() {
           activeFilters={activeFilters} 
           onClearFilters={clearFilters}
           onSettingsClick={() => setSettingsOpen(true)}
+          isLoading={loading}
+          onRefresh={fetchNews}
+          feedCount={appData.feeds.filter(f => f.enabled).length}
+          articleCount={articles.length}
         />
 
         <div className="content">

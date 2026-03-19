@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAppData } from '../hooks/useAppData';
+import type { CategoryInfo, TagInfo, FeedInfo } from '../types';
 import './Settings.css';
 
 interface SettingsProps {
@@ -79,6 +81,38 @@ export function useSettings() {
 export default function Settings({ isOpen, onClose }: SettingsProps) {
   const [activeTab, setActiveTab] = useState('general');
   const { settings, updateSetting, loading } = useSettings();
+  const { data: appData, addCategory, deleteCategory, addTag, deleteTag, addFeed, deleteFeed, toggleFeedEnabled } = useAppData();
+
+  const [newCategory, setNewCategory] = useState({ id: '', name: '', icon: 'folder', color: 'blue' });
+  const [newTag, setNewTag] = useState({ id: '', name: '' });
+  const [newFeed, setNewFeed] = useState({ name: '', url: '', category: 'geopolitics' });
+
+  const handleAddCategory = () => {
+    if (newCategory.id && newCategory.name) {
+      addCategory({ ...newCategory, id: newCategory.id.toLowerCase().replace(/\s+/g, '-') });
+      setNewCategory({ id: '', name: '', icon: 'folder', color: 'blue' });
+    }
+  };
+
+  const handleAddTag = () => {
+    if (newTag.id && newTag.name) {
+      addTag({ id: newTag.id.toLowerCase().replace(/\s+/g, '-'), name: newTag.name });
+      setNewTag({ id: '', name: '' });
+    }
+  };
+
+  const handleAddFeed = () => {
+    if (newFeed.name && newFeed.url) {
+      addFeed({
+        id: Date.now().toString(),
+        name: newFeed.name,
+        url: newFeed.url,
+        category: newFeed.category,
+        enabled: true,
+      });
+      setNewFeed({ name: '', url: '', category: 'geopolitics' });
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -135,6 +169,34 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                 <path d="M12 16v-4M12 8h.01" />
               </svg>
               About
+            </button>
+            <button
+              className={`settings-tab ${activeTab === 'categories' ? 'active' : ''}`}
+              onClick={() => setActiveTab('categories')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+              </svg>
+              Categories
+            </button>
+            <button
+              className={`settings-tab ${activeTab === 'tags' ? 'active' : ''}`}
+              onClick={() => setActiveTab('tags')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                <line x1="7" y1="7" x2="7.01" y2="7" />
+              </svg>
+              Tags
+            </button>
+            <button
+              className={`settings-tab ${activeTab === 'feeds' ? 'active' : ''}`}
+              onClick={() => setActiveTab('feeds')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6.18 15.64a2.18 2.18 0 1 1 0 4.36 2.18 2.18 0 0 1 0-4.36m0-6.18a8.18 8.18 0 0 1 8.18 8.18m-8.18-12.18a12.18 12.18 0 1 0 12.18 12.18"/>
+              </svg>
+              RSS Feeds
             </button>
           </nav>
 
@@ -321,6 +383,160 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   <span className="tech-badge">TypeScript</span>
                   <span className="tech-badge">Tauri 2.0</span>
                   <span className="tech-badge">Rust</span>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'categories' && (
+              <div className="settings-section">
+                <h3>Categories</h3>
+                <div className="edit-list">
+                  {appData.categories.map((cat: CategoryInfo) => (
+                    <div key={cat.id} className="edit-item">
+                      <div className="edit-item-info">
+                        <span className="edit-item-name">{cat.name}</span>
+                        <span className="edit-item-id">{cat.id}</span>
+                      </div>
+                      <button 
+                        className="edit-delete"
+                        onClick={() => deleteCategory(cat.id)}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="add-form">
+                  <input
+                    type="text"
+                    placeholder="ID (e.g., 'energy')"
+                    value={newCategory.id}
+                    onChange={(e) => setNewCategory({ ...newCategory, id: e.target.value })}
+                    className="settings-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Name (e.g., 'Energy')"
+                    value={newCategory.name}
+                    onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                    className="settings-input"
+                  />
+                  <select
+                    value={newCategory.color}
+                    onChange={(e) => setNewCategory({ ...newCategory, color: e.target.value })}
+                    className="settings-select"
+                  >
+                    <option value="blue">Blue</option>
+                    <option value="red">Red</option>
+                    <option value="amber">Amber</option>
+                    <option value="cyan">Cyan</option>
+                    <option value="violet">Violet</option>
+                    <option value="green">Green</option>
+                  </select>
+                  <button className="add-btn" onClick={handleAddCategory}>Add</button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'tags' && (
+              <div className="settings-section">
+                <h3>Tags</h3>
+                <div className="edit-list">
+                  {appData.tags.map((tag: TagInfo) => (
+                    <div key={tag.id} className="edit-item">
+                      <div className="edit-item-info">
+                        <span className="edit-item-name">{tag.name}</span>
+                        <span className="edit-item-id">{tag.id}</span>
+                      </div>
+                      <button 
+                        className="edit-delete"
+                        onClick={() => deleteTag(tag.id)}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="add-form">
+                  <input
+                    type="text"
+                    placeholder="ID (e.g., 'iran')"
+                    value={newTag.id}
+                    onChange={(e) => setNewTag({ ...newTag, id: e.target.value })}
+                    className="settings-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Name (e.g., 'Irán')"
+                    value={newTag.name}
+                    onChange={(e) => setNewTag({ ...newTag, name: e.target.value })}
+                    className="settings-input"
+                  />
+                  <button className="add-btn" onClick={handleAddTag}>Add</button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'feeds' && (
+              <div className="settings-section">
+                <h3>RSS Feeds</h3>
+                <div className="edit-list">
+                  {appData.feeds.map((feed: FeedInfo) => (
+                    <div key={feed.id} className="edit-item">
+                      <div className="edit-item-info">
+                        <span className="edit-item-name">{feed.name}</span>
+                        <span className="edit-item-id">{feed.category}</span>
+                      </div>
+                      <div className="edit-actions">
+                        <label className="mini-toggle">
+                          <input
+                            type="checkbox"
+                            checked={feed.enabled}
+                            onChange={() => toggleFeedEnabled(feed.id)}
+                          />
+                          <span className="toggle-slider"></span>
+                        </label>
+                        <button 
+                          className="edit-delete"
+                          onClick={() => deleteFeed(feed.id)}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="add-form">
+                  <input
+                    type="text"
+                    placeholder="Feed Name"
+                    value={newFeed.name}
+                    onChange={(e) => setNewFeed({ ...newFeed, name: e.target.value })}
+                    className="settings-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="RSS URL"
+                    value={newFeed.url}
+                    onChange={(e) => setNewFeed({ ...newFeed, url: e.target.value })}
+                    className="settings-input"
+                  />
+                  <select
+                    value={newFeed.category}
+                    onChange={(e) => setNewFeed({ ...newFeed, category: e.target.value })}
+                    className="settings-select"
+                  >
+                    {appData.categories.map((cat: CategoryInfo) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                  <button className="add-btn" onClick={handleAddFeed}>Add</button>
                 </div>
               </div>
             )}

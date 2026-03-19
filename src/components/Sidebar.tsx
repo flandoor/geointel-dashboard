@@ -1,20 +1,27 @@
 import { useState } from 'react';
-import { categories, tags } from '../data/news';
-import type { Category, Tag } from '../types';
+import type { CategoryInfo, TagInfo, FeedInfo } from '../types';
 import './Sidebar.css';
 
 interface SidebarProps {
-  selectedCategory: Category | null;
-  selectedTags: Tag[];
-  onCategoryChange: (category: Category | null) => void;
-  onTagToggle: (tag: Tag) => void;
+  categories: CategoryInfo[];
+  tags: TagInfo[];
+  feeds: FeedInfo[];
+  selectedCategory: string | null;
+  selectedTags: string[];
+  onCategoryChange: (category: string | null) => void;
+  onTagToggle: (tag: string) => void;
+  lastSync: string;
 }
 
 export default function Sidebar({
+  categories,
+  tags,
+  feeds,
   selectedCategory,
   selectedTags,
   onCategoryChange,
   onTagToggle,
+  lastSync,
 }: SidebarProps) {
   const [isRSSExpanded, setIsRSSExpanded] = useState(false);
 
@@ -93,7 +100,7 @@ export default function Sidebar({
                 <span className="category-count">12</span>
               </button>
             </li>
-            {categories.map((cat) => (
+            {categories.map((cat: CategoryInfo) => (
               <li key={cat.id}>
                 <button
                   className={`category-item ${selectedCategory === cat.id ? 'active' : ''}`}
@@ -102,11 +109,6 @@ export default function Sidebar({
                 >
                   {categoryIcons[cat.id]}
                   <span>{cat.name}</span>
-                  <span className="category-count">
-                    {cat.id === 'geopolitics' ? 4 : 
-                     cat.id === 'military' ? 4 : 
-                     cat.id === 'economy' ? 2 : 2}
-                  </span>
                 </button>
               </li>
             ))}
@@ -119,7 +121,7 @@ export default function Sidebar({
             <span className="tag-count">{tags.length}</span>
           </h3>
           <div className="tag-cloud">
-            {tags.map((tag) => (
+            {tags.map((tag: TagInfo) => (
               <button
                 key={tag.id}
                 className={`tag ${selectedTags.includes(tag.id) ? 'tag-active' : ''}`}
@@ -157,18 +159,18 @@ export default function Sidebar({
           
           {isRSSExpanded && (
             <div className="rss-list">
-              <div className="rss-item">
-                <span className="rss-dot" style={{ background: 'var(--accent-blue)' }} />
-                <span>Reuters World</span>
-              </div>
-              <div className="rss-item">
-                <span className="rss-dot" style={{ background: 'var(--accent-red)' }} />
-                <span>Defense News</span>
-              </div>
-              <div className="rss-item">
-                <span className="rss-dot" style={{ background: 'var(--accent-amber)' }} />
-                <span>Bloomberg</span>
-              </div>
+              {feeds.filter(f => f.enabled).map((feed: FeedInfo) => (
+                <div key={feed.id} className="rss-item">
+                  <span className="rss-dot" style={{ background: 'var(--accent-blue)' }} />
+                  <span>{feed.name}</span>
+                </div>
+              ))}
+              {feeds.filter(f => f.enabled).length === 0 && (
+                <div className="rss-item">
+                  <span className="rss-dot" style={{ background: 'var(--text-muted)' }} />
+                  <span>No feeds enabled</span>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -179,7 +181,7 @@ export default function Sidebar({
           <span className="status-dot" />
           <span>System Online</span>
         </div>
-        <p className="timestamp">Last sync: 3 min ago</p>
+        <p className="timestamp">Last sync: {lastSync}</p>
       </div>
     </aside>
   );

@@ -5,9 +5,13 @@ interface HeaderProps {
   activeFilters: number;
   onClearFilters: () => void;
   onSettingsClick: () => void;
+  isLoading?: boolean;
+  onRefresh?: () => void;
+  feedCount?: number;
+  articleCount?: number;
 }
 
-export default function Header({ activeFilters, onClearFilters, onSettingsClick }: HeaderProps) {
+export default function Header({ activeFilters, onClearFilters, onSettingsClick, isLoading, onRefresh, feedCount, articleCount }: HeaderProps) {
   const [searchFocused, setSearchFocused] = useState(false);
 
   return (
@@ -44,7 +48,7 @@ export default function Header({ activeFilters, onClearFilters, onSettingsClick 
 
       <div className="header-center">
         <div className="live-indicator">
-          <span className="live-dot" />
+          <span className={`live-dot ${isLoading ? 'loading' : ''}`} />
           <span className="live-text">LIVE</span>
         </div>
         <h1 className="header-title">Intelligence Feed</h1>
@@ -59,15 +63,26 @@ export default function Header({ activeFilters, onClearFilters, onSettingsClick 
             Clear filters ({activeFilters})
           </button>
         )}
+
+        <button 
+          className={`refresh-button ${isLoading ? 'loading' : ''}`} 
+          onClick={onRefresh}
+          title="Refresh feeds"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M23 4v6h-6M1 20v-6h6" />
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+          </svg>
+        </button>
         
         <div className="stats">
           <div className="stat-item">
-            <span className="stat-value">47</span>
+            <span className="stat-value">{feedCount ?? 0}</span>
             <span className="stat-label">Sources</span>
           </div>
           <div className="stat-divider" />
           <div className="stat-item">
-            <span className="stat-value">1.2k</span>
+            <span className="stat-value">{articleCount ?? 0}</span>
             <span className="stat-label">Articles</span>
           </div>
         </div>

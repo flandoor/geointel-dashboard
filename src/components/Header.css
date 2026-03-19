@@ -124,6 +124,18 @@
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
+.live-dot.loading {
+  animation: spin 1s linear infinite;
+  background: var(--accent-amber);
+  box-shadow: 0 0 8px var(--accent-amber);
+}
+
+@keyframes spin {
+  from { opacity: 1; }
+  50% { opacity: 0.5; }
+  to { opacity: 1; }
+}
+
 .live-text {
   font-size: 9px;
   font-weight: 600;
@@ -199,6 +211,35 @@
   width: 1px;
   height: 24px;
   background: var(--border-accent);
+}
+
+.clear-button:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.refresh-button {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.refresh-button:hover {
+  background: var(--bg-card);
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+.refresh-button.loading svg {
+  animation: spin 1s linear infinite;
 }
 
 .settings-button {
