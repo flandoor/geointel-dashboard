@@ -1,0 +1,26 @@
+{
+  "name": "geopolitical-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:tauri": "tauri dev",
+    "build": "next build",
+    "build:tauri": "tauri build",
+    "build:all": "npm run build && npm run build:tauri",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "14.2.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0",
+    "@types/node": "^20.12.12",
+    "@types/react": "^18.3.2",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.4.5"
+  }
+}
