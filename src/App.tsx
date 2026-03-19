@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import NewsCard from './components/NewsCard';
+import NewsDetail from './components/NewsDetail';
 import SummaryTicker from './components/SummaryTicker';
 import MetricsPanel from './components/MetricsPanel';
 import Settings from './components/Settings';
@@ -17,6 +18,7 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
 
   const { data: appData, loading: dataLoading } = useAppData();
 
@@ -61,6 +63,14 @@ function App() {
   const clearFilters = () => {
     setSelectedCategory(null);
     setSelectedTags([]);
+  };
+
+  const handleArticleClick = (article: NewsArticle) => {
+    setSelectedArticle(article);
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedArticle(null);
   };
 
   const filteredArticles = articles.filter((article) => {
@@ -132,6 +142,7 @@ function App() {
                     article={article}
                     variant="featured"
                     index={index}
+                    onClick={handleArticleClick}
                   />
                 ))}
               </div>
@@ -154,6 +165,7 @@ function App() {
                   key={article.id}
                   article={article}
                   index={index + breakingNews.length}
+                  onClick={handleArticleClick}
                 />
               ))}
             </div>
@@ -178,6 +190,10 @@ function App() {
       </main>
 
       <Settings isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+
+      {selectedArticle && (
+        <NewsDetail article={selectedArticle} onClose={handleCloseDetail} />
+      )}
     </div>
   );
 }

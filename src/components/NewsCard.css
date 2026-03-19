@@ -155,6 +155,26 @@
   gap: 12px;
 }
 
+.news-card-expand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all 0.2s ease;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.news-card:hover .news-card-expand {
+  opacity: 1;
+  transform: translateY(0);
+  color: var(--accent-blue);
+}
+
 .news-tags {
   display: flex;
   flex-wrap: wrap;

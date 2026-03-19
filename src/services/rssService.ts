@@ -134,15 +134,19 @@ export async function fetchRSSFeed(feed: FeedInfo): Promise<NewsArticle[]> {
       
       const title = getTextContent(item, 'title') || item.getAttribute('title') || '';
       const link = getTextContent(item, 'link') || item.getElementsByTagName('link')[0]?.textContent || '';
-      const description = getTextContent(item, 'description') || getTextContent(item, 'summary') || getTextContent(item, 'content') || '';
+      const description = getTextContent(item, 'description') || getTextContent(item, 'summary') || getTextContent(item, 'content:encoded') || getTextContent(item, 'content') || '';
       const pubDate = getTextContent(item, 'pubDate') || getTextContent(item, 'published') || getTextContent(item, 'updated') || '';
       
       if (!title) return;
 
-      const summary = description
-        .replace(/<[^>]*>/g, '')
+      const cleanDescription = description
+        .replace(/<[^>]*>/g, ' ')
         .replace(/&[a-z]+;/gi, ' ')
-        .substring(0, 300);
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const summary = cleanDescription.substring(0, 300);
+      const fullContent = description;
 
       const category = getCategoryFromTitle(title, feed.category);
       const tags = extractTags(title, summary);
@@ -151,6 +155,7 @@ export async function fetchRSSFeed(feed: FeedInfo): Promise<NewsArticle[]> {
         id: generateId(),
         title: title.substring(0, 200),
         summary: summary || 'No summary available',
+        content: fullContent,
         source: feed.name,
         category,
         tags,
