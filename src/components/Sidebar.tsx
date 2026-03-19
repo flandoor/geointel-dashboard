@@ -8,8 +8,10 @@ interface SidebarProps {
   feeds: FeedInfo[];
   selectedCategory: string | null;
   selectedTags: string[];
+  selectedFeed: string | null;
   onCategoryChange: (category: string | null) => void;
   onTagToggle: (tag: string) => void;
+  onFeedSelect: (feedId: string | null) => void;
   lastSync: string;
 }
 
@@ -19,8 +21,10 @@ export default function Sidebar({
   feeds,
   selectedCategory,
   selectedTags,
+  selectedFeed,
   onCategoryChange,
   onTagToggle,
+  onFeedSelect,
   lastSync,
 }: SidebarProps) {
   const [isRSSExpanded, setIsRSSExpanded] = useState(false);
@@ -159,11 +163,22 @@ export default function Sidebar({
           
           {isRSSExpanded && (
             <div className="rss-list">
+              <button
+                className={`rss-item ${selectedFeed === null ? 'active' : ''}`}
+                onClick={() => onFeedSelect(null)}
+              >
+                <span className="rss-dot" style={{ background: 'var(--text-muted)' }} />
+                <span>All Feeds</span>
+              </button>
               {feeds.filter(f => f.enabled).map((feed: FeedInfo) => (
-                <div key={feed.id} className="rss-item">
+                <button
+                  key={feed.id}
+                  className={`rss-item ${selectedFeed === feed.id ? 'active' : ''}`}
+                  onClick={() => onFeedSelect(feed.id)}
+                >
                   <span className="rss-dot" style={{ background: 'var(--accent-blue)' }} />
                   <span>{feed.name}</span>
-                </div>
+                </button>
               ))}
               {feeds.filter(f => f.enabled).length === 0 && (
                 <div className="rss-item">

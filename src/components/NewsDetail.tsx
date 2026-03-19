@@ -42,9 +42,14 @@ export default function NewsDetail({ article, onClose }: NewsDetailProps) {
     }
   };
 
-  const openOriginalArticle = () => {
+  const openOriginalArticle = async () => {
     if (article.link) {
-      window.open(article.link, '_blank', 'noopener,noreferrer');
+      try {
+        const { open } = await import('@tauri-apps/plugin-shell');
+        await open(article.link);
+      } catch {
+        window.open(article.link, '_blank', 'noopener,noreferrer');
+      }
     }
   };
 

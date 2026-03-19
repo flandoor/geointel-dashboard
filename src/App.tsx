@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import NewsCard from './components/NewsCard';
@@ -11,42 +11,95 @@ import { fetchAllFeeds } from './services/rssService';
 import type { NewsArticle } from './types';
 import './App.css';
 
+let articlesStore: any = null;
+
+async function initArticlesStore() {
+  if (articlesStore) return articlesStore;
+  try {
+    const { load } = await import('@tauri-apps/plugin-store');
+    articlesStore = await load('articles.json');
+    return articlesStore;
+  } catch {
+    return null;
+  }
+}
+
+async function loadSavedArticles(): Promise<NewsArticle[]> {
+  const store = await initArticlesStore();
+  if (store) {
+    const saved = await store.get('articles') as NewsArticle[] | null;
+    return saved || [];
+  }
+  return [];
+}
+
+async function saveArticles(articles: NewsArticle[]) {
+  const store = await initArticlesStore();
+  if (store) {
+    await store.set('articles', articles);
+    await store.save();
+  }
+}
+
 function App() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [lastSync, setLastSync] = useState('Never');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
+  const [selectedFeed, setSelectedFeed] = useState<string | null>(null);
+  const hasFetched = useRef(false);
+  const feedsCountRef = useRef(0);
 
   const { data: appData, loading: dataLoading } = useAppData();
 
-  const fetchNews = useCallback(async () => {
-    if (dataLoading) return;
-    setLoading(true);
+  const fetchNews = useCallback(async (silent = false) => {
+    if (dataLoading || appData.feeds.length === 0) return;
+    if (!silent) setLoading(true);
     try {
       const fetched = await fetchAllFeeds(appData.feeds);
       setArticles(fetched);
       setLastSync(new Date().toLocaleTimeString());
+      await saveArticles(fetched);
     } catch (error) {
       console.error('Error fetching news:', error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [appData.feeds, dataLoading]);
 
   useEffect(() => {
-    fetchNews();
-    const interval = setInterval(fetchNews, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [fetchNews]);
+    loadSavedArticles().then(cached => {
+      if (cached.length > 0) {
+        setArticles(cached);
+        const lastFetch = cached[0]?.publishedAt;
+        if (lastFetch) {
+          const date = new Date(lastFetch);
+          setLastSync(date.toLocaleTimeString());
+        }
+      }
+      if (!hasFetched.current) {
+        hasFetched.current = true;
+        fetchNews(true);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (!dataLoading && appData.feeds.length > 0) {
-      fetchNews();
+      if (appData.feeds.length !== feedsCountRef.current) {
+        feedsCountRef.current = appData.feeds.length;
+        fetchNews(true);
+      }
+      if (!hasFetched.current) {
+        hasFetched.current = true;
+        const interval = setInterval(() => fetchNews(true), 5 * 60 * 1000);
+        return () => clearInterval(interval);
+      }
     }
-  }, [appData.feeds, dataLoading]);
+  }, [appData.feeds, dataLoading, fetchNews]);
 
   const activeFilters = (selectedCategory ? 1 : 0) + selectedTags.length;
 
@@ -63,6 +116,11 @@ function App() {
   const clearFilters = () => {
     setSelectedCategory(null);
     setSelectedTags([]);
+    setSelectedFeed(null);
+  };
+
+  const handleFeedSelect = (feedId: string | null) => {
+    setSelectedFeed(feedId);
   };
 
   const handleArticleClick = (article: NewsArticle) => {
@@ -80,6 +138,9 @@ function App() {
     if (selectedTags.length > 0) {
       const hasMatchingTag = article.tags.some((tag) => selectedTags.includes(tag));
       if (!hasMatchingTag) return false;
+    }
+    if (selectedFeed && article.source !== appData.feeds.find(f => f.id === selectedFeed)?.name) {
+      return false;
     }
     return true;
   });
@@ -103,8 +164,10 @@ function App() {
         feeds={appData.feeds}
         selectedCategory={selectedCategory}
         selectedTags={selectedTags}
+        selectedFeed={selectedFeed}
         onCategoryChange={handleCategoryChange}
         onTagToggle={handleTagToggle}
+        onFeedSelect={handleFeedSelect}
         lastSync={lastSync}
       />
 
