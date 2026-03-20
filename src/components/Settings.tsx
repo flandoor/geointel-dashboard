@@ -381,7 +381,7 @@ const ICONS = [
                     </svg>
                   </div>
                   <div>
-                    <h3>GeoIntel Dashboard</h3>
+                    <h3>iflandoor news dashboard</h3>
                     <p>Version 1.0.0</p>
                   </div>
                 </div>

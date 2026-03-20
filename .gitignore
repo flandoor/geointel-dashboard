@@ -7,6 +7,7 @@ Cargo.lock
 src-tauri/target
 src-tauri/bin
 src-tauri/pkg
+src-tauri/gen
 
 # Node
 node_modules/

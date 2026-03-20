@@ -90,7 +90,7 @@ export default function Header({ activeFilters, onClearFilters, onSettingsClick,
           <span className={`live-dot ${isLoading ? 'loading' : ''}`} />
           <span className="live-text">LIVE</span>
         </div>
-        <h1 className="header-title">Intelligence Feed</h1>
+        <h1 className="header-title">News Feed</h1>
       </div>
 
       <div className="header-right">
