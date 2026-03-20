@@ -1,6 +1,6 @@
 # iFlandoor News Dashboard
 
-Desktop application for monitoring geopolitical intelligence news through RSS aggregation with real-time market data.
+Desktop application for monitoring news through RSS aggregation with real-time market data.
 
 ![Tauri](https://img.shields.io/badge/Tauri-2.0-blue) ![React](https://img.shields.io/badge/React-18-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
 
