@@ -38,6 +38,7 @@ export interface AppData {
   categories: CategoryInfo[];
   tags: TagInfo[];
   feeds: FeedInfo[];
+  bookmarkedArticleIds: string[];
 }
 
 export const defaultCategories: CategoryInfo[] = [

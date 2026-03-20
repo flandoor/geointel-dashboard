@@ -9,9 +9,12 @@ interface SidebarProps {
   selectedCategory: string | null;
   selectedTags: string[];
   selectedFeed: string | null;
+  selectedBookmarks: boolean;
+  bookmarkCount: number;
   onCategoryChange: (category: string | null) => void;
   onTagToggle: (tag: string) => void;
   onFeedSelect: (feedId: string | null) => void;
+  onBookmarksToggle: () => void;
   articleCount?: number;
 }
 
@@ -22,9 +25,12 @@ export default function Sidebar({
   selectedCategory,
   selectedTags,
   selectedFeed,
+  selectedBookmarks,
+  bookmarkCount,
   onCategoryChange,
   onTagToggle,
   onFeedSelect,
+  onBookmarksToggle,
   articleCount = 0,
 }: SidebarProps) {
   const [isRSSExpanded, setIsRSSExpanded] = useState(false);
@@ -63,6 +69,21 @@ export default function Sidebar({
       </div>
 
       <nav className="sidebar-nav">
+        <div className="nav-section">
+          <button
+            className={`bookmarks-item ${selectedBookmarks ? 'active' : ''}`}
+            onClick={onBookmarksToggle}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={selectedBookmarks ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+            <span>Bookmarks</span>
+            {bookmarkCount > 0 && (
+              <span className="bookmarks-count">{bookmarkCount}</span>
+            )}
+          </button>
+        </div>
+
         <div className="nav-section">
           <h3 className="nav-section-title">Categories</h3>
           <ul className="category-list">

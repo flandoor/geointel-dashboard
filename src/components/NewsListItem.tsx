@@ -6,9 +6,11 @@ interface NewsListItemProps {
   article: NewsArticle;
   isSelected: boolean;
   onClick: (article: NewsArticle) => void;
+  isBookmarked?: boolean;
+  onBookmarkToggle?: (articleId: string) => void;
 }
 
-export default function NewsListItem({ article, isSelected, onClick }: NewsListItemProps) {
+export default function NewsListItem({ article, isSelected, onClick, isBookmarked = false, onBookmarkToggle }: NewsListItemProps) {
   const categoryColors: Record<string, string> = {
     geopolitics: 'var(--accent-blue)',
     military: 'var(--accent-red)',
@@ -34,12 +36,23 @@ export default function NewsListItem({ article, isSelected, onClick }: NewsListI
             <span className="list-item-dot">·</span>
             <span className="list-item-time">{formatDate(article.publishedAt)}</span>
           </div>
-          {article.isBreaking && (
-            <span className="list-item-breaking">
-              <span className="breaking-dot" />
-              LIVE
-            </span>
-          )}
+          <div className="list-item-header-actions">
+            {article.isBreaking && (
+              <span className="list-item-breaking">
+                <span className="breaking-dot" />
+                LIVE
+              </span>
+            )}
+            <button 
+              className={`list-bookmark-btn ${isBookmarked ? 'bookmarked' : ''}`}
+              onClick={(e) => { e.stopPropagation(); onBookmarkToggle?.(article.id); }}
+              title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <h3 className="list-item-title">{article.title}</h3>

@@ -147,6 +147,49 @@
   color: var(--text-muted);
 }
 
+.bookmarks-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.bookmarks-item:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+.bookmarks-item.active {
+  background: var(--accent-amber);
+  background: rgba(217, 119, 6, 0.12);
+  border-color: var(--accent-amber);
+  color: var(--accent-amber);
+}
+
+.bookmarks-item.active svg {
+  color: var(--accent-amber);
+}
+
+.bookmarks-count {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 2px 6px;
+  background: rgba(217, 119, 6, 0.2);
+  border-radius: 4px;
+  color: var(--accent-amber);
+}
+
 .tag-count {
   font-size: 9px;
   padding: 2px 6px;

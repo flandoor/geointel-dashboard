@@ -74,6 +74,45 @@
   margin-bottom: 12px;
 }
 
+.news-card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bookmark-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.bookmark-btn:hover {
+  border-color: var(--border-accent);
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+}
+
+.bookmark-btn.bookmarked {
+  color: var(--accent-amber);
+  border-color: var(--accent-amber);
+  background: rgba(217, 119, 6, 0.1);
+}
+
+.bookmark-btn.bookmarked:hover {
+  color: var(--text-muted);
+  border-color: var(--border-subtle);
+  background: transparent;
+}
+
 .news-card-meta {
   display: flex;
   align-items: center;

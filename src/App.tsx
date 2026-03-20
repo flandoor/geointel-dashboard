@@ -53,10 +53,11 @@ function AppContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedBookmarks, setSelectedBookmarks] = useState(false);
   const hasFetched = useRef(false);
   const feedsCountRef = useRef(0);
 
-  const { data: appData, loading: dataLoading } = useAppData();
+  const { data: appData, loading: dataLoading, toggleBookmark, isBookmarked } = useAppData();
 
   const fetchNews = useCallback(async (silent = false) => {
     if (dataLoading || appData.feeds.length === 0) return;
@@ -100,10 +101,11 @@ function AppContent() {
     }
   }, [dataLoading, appData.feeds.length, fetchNews]);
 
-  const activeFilters = (selectedCategory ? 1 : 0) + selectedTags.length;
+  const activeFilters = (selectedCategory ? 1 : 0) + selectedTags.length + (selectedBookmarks ? 1 : 0);
 
   const handleCategoryChange = (category: string | null) => {
     setSelectedCategory(category);
+    setSelectedBookmarks(false);
   };
 
   const handleTagToggle = (tag: string) => {
@@ -117,6 +119,7 @@ function AppContent() {
     setSelectedTags([]);
     setSelectedFeed(null);
     setSearchQuery('');
+    setSelectedBookmarks(false);
   };
 
   const handleFeedSelect = (feedId: string | null) => {
@@ -161,6 +164,9 @@ function AppContent() {
         return false;
       }
     }
+    if (selectedBookmarks && !appData.bookmarkedArticleIds.includes(article.id)) {
+      return false;
+    }
     return true;
   });
 
@@ -184,9 +190,12 @@ function AppContent() {
         selectedCategory={selectedCategory}
         selectedTags={selectedTags}
         selectedFeed={selectedFeed}
+        selectedBookmarks={selectedBookmarks}
+        bookmarkCount={appData.bookmarkedArticleIds.length}
         onCategoryChange={handleCategoryChange}
         onTagToggle={handleTagToggle}
         onFeedSelect={handleFeedSelect}
+        onBookmarksToggle={() => { setSelectedBookmarks(!selectedBookmarks); setSelectedCategory(null); }}
         articleCount={filteredArticles.length}
       />
 
@@ -225,6 +234,8 @@ function AppContent() {
                         variant="featured"
                         index={index}
                         onClick={handleArticleClick}
+                        isBookmarked={isBookmarked(article.id)}
+                        onBookmarkToggle={toggleBookmark}
                       />
                     ))}
                   </div>
@@ -258,6 +269,8 @@ function AppContent() {
                       article={article}
                       index={index + breakingNews.length}
                       onClick={handleArticleClick}
+                      isBookmarked={isBookmarked(article.id)}
+                      onBookmarkToggle={toggleBookmark}
                     />
                   ))}
                 </div>
@@ -292,12 +305,18 @@ function AppContent() {
                       article={article}
                       isSelected={selectedArticle?.id === article.id}
                       onClick={handleArticleClick}
+                      isBookmarked={isBookmarked(article.id)}
+                      onBookmarkToggle={toggleBookmark}
                     />
                   ))}
                 </div>
               </div>
               <div className="split-panel">
-                <NewsPanel article={selectedArticle} />
+                <NewsPanel 
+                  article={selectedArticle} 
+                  isBookmarked={selectedArticle ? isBookmarked(selectedArticle.id) : false}
+                  onBookmarkToggle={toggleBookmark}
+                />
               </div>
             </div>
           )}

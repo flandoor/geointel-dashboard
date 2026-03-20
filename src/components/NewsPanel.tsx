@@ -4,6 +4,8 @@ import './NewsPanel.css';
 
 interface NewsPanelProps {
   article: NewsArticle | null;
+  isBookmarked?: boolean;
+  onBookmarkToggle?: (articleId: string) => void;
 }
 
 function sanitizeHtml(html: string): string {
@@ -12,7 +14,7 @@ function sanitizeHtml(html: string): string {
   return temp.innerHTML;
 }
 
-export default function NewsPanel({ article }: NewsPanelProps) {
+export default function NewsPanel({ article, isBookmarked = false, onBookmarkToggle }: NewsPanelProps) {
   const categoryColors: Record<string, string> = {
     geopolitics: 'var(--accent-blue)',
     military: 'var(--accent-red)',
@@ -115,8 +117,18 @@ export default function NewsPanel({ article }: NewsPanelProps) {
         )}
       </div>
 
-      {article.link && (
-        <div className="news-panel-footer">
+      <div className="news-panel-footer">
+        <button 
+          className={`panel-bookmark-btn ${isBookmarked ? 'bookmarked' : ''}`}
+          onClick={() => article && onBookmarkToggle?.(article.id)}
+          title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+          </svg>
+          {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+        </button>
+        {article?.link && (
           <button className="news-panel-read-btn" onClick={openOriginalArticle}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -125,8 +137,8 @@ export default function NewsPanel({ article }: NewsPanelProps) {
             </svg>
             Read Full Article
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

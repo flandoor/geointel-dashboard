@@ -43,6 +43,39 @@
   margin-bottom: 8px;
 }
 
+.list-item-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.list-bookmark-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.list-bookmark-btn:hover {
+  border-color: var(--border-accent);
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+}
+
+.list-bookmark-btn.bookmarked {
+  color: var(--accent-amber);
+  border-color: var(--accent-amber);
+  background: rgba(217, 119, 6, 0.1);
+}
+
 .list-item-meta {
   display: flex;
   align-items: center;

@@ -15,6 +15,8 @@ interface AppDataContextType {
   updateFeed: (id: string, updates: Partial<FeedInfo>) => void;
   deleteFeed: (id: string) => void;
   toggleFeedEnabled: (id: string) => void;
+  toggleBookmark: (articleId: string) => void;
+  isBookmarked: (articleId: string) => boolean;
   resetToDefaults: () => void;
 }
 
@@ -39,6 +41,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     categories: defaultCategories,
     tags: defaultTags,
     feeds: defaultFeeds,
+    bookmarkedArticleIds: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -51,6 +54,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             categories: saved.categories?.length ? saved.categories : defaultCategories,
             tags: saved.tags?.length ? saved.tags : defaultTags,
             feeds: saved.feeds?.length ? saved.feeds : defaultFeeds,
+            bookmarkedArticleIds: saved.bookmarkedArticleIds || [],
           });
         }
       }
@@ -134,9 +138,23 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       categories: defaultCategories,
       tags: defaultTags,
       feeds: defaultFeeds,
+      bookmarkedArticleIds: [],
     };
     saveData(defaultData);
   }, [saveData]);
+
+  const toggleBookmark = useCallback((articleId: string) => {
+    const current = data.bookmarkedArticleIds;
+    const updated = current.includes(articleId)
+      ? current.filter(id => id !== articleId)
+      : [...current, articleId];
+    const newData = { ...data, bookmarkedArticleIds: updated };
+    saveData(newData);
+  }, [data, saveData]);
+
+  const isBookmarked = useCallback((articleId: string) => {
+    return data.bookmarkedArticleIds.includes(articleId);
+  }, [data.bookmarkedArticleIds]);
 
   return (
     <AppDataContext.Provider value={{
@@ -152,6 +170,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       updateFeed,
       deleteFeed,
       toggleFeedEnabled,
+      toggleBookmark,
+      isBookmarked,
       resetToDefaults,
     }}>
       {children}

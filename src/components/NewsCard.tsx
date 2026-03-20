@@ -7,9 +7,11 @@ interface NewsCardProps {
   variant?: 'default' | 'featured';
   index?: number;
   onClick?: (article: NewsArticle) => void;
+  isBookmarked?: boolean;
+  onBookmarkToggle?: (articleId: string) => void;
 }
 
-export default function NewsCard({ article, variant = 'default', index = 0, onClick }: NewsCardProps) {
+export default function NewsCard({ article, variant = 'default', index = 0, onClick, isBookmarked = false, onBookmarkToggle }: NewsCardProps) {
   const categoryColors: Record<string, string> = {
     geopolitics: 'var(--accent-blue)',
     military: 'var(--accent-red)',
@@ -46,12 +48,23 @@ export default function NewsCard({ article, variant = 'default', index = 0, onCl
           )}
         </div>
         
-        {article.isBreaking && (
-          <span className="breaking-badge">
-            <span className="breaking-dot" />
-            BREAKING
-          </span>
-        )}
+        <div className="news-card-header-actions">
+          {article.isBreaking && (
+            <span className="breaking-badge">
+              <span className="breaking-dot" />
+              BREAKING
+            </span>
+          )}
+          <button 
+            className={`bookmark-btn ${isBookmarked ? 'bookmarked' : ''}`}
+            onClick={(e) => { e.stopPropagation(); onBookmarkToggle?.(article.id); }}
+            title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       <h3 className="news-card-title">{article.title}</h3>
