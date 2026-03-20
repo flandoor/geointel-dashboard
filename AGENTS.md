@@ -1,153 +1,165 @@
-# iflandoor news dashboard - Agent Guidelines
+# iFlandöör News Dashboard - Agent Guidelines
 
-## IMPORTANT: This is a Desktop Application
-
-This is a **Tauri desktop application** (not a web app). The UI runs in a native WebView window, not in a browser. Design decisions should prioritize desktop UX patterns.
-
----
-
-## Project Overview
-
-A geopolitical intelligence dashboard built with:
-- **React 18** + **TypeScript** + **Vite** (frontend)
-- **Tauri 2.0** + **Rust** (desktop shell)
-- **Tauri Store Plugin** for persistent settings
-
-The app runs as a native Windows/macOS/Linux application using WebView2 (Windows) or WebKit (macOS/Linux).
+## Descripción
+Aplicación de escritorio Tauri para monitoreo de noticias de inteligencia geopolítica mediante agregación RSS con datos de mercado en tiempo real.
 
 ---
 
-## Build Commands
-
-```bash
-# Development
-npm run dev              # Start Vite dev server (http://localhost:1420)
-npm run dev:tauri        # Run app in Tauri dev mode (with hot reload)
-
-# Production Build
-npm run build            # Build frontend to dist/
-npm run build:tauri       # Build Tauri desktop executable
-npm run build:all         # Build both frontend and desktop app
-
-# Executable location after build:
-# src-tauri/target/release/iflandoor-news-dashboard.exe (Windows)
-```
+## Stack Tecnológico
+- **Frontend**: React 18 + TypeScript + Vite
+- **Desktop Shell**: Tauri 2.0 + Rust
+- **Persistencia**: @tauri-apps/plugin-store
+- **URLs Externas**: @tauri-apps/plugin-shell
 
 ---
 
-## Desktop-Specific Guidelines
-
-### Window Management
-- App runs in a fixed window (min 1024x700)
-- Native window decorations (title bar, controls)
-- No responsive design needed - optimize for desktop viewport
-
-### Data Persistence
-- Use `@tauri-apps/plugin-store` for persistent settings
-- Settings auto-save to `settings.json`
-- No localStorage needed (Tauri store handles it)
-
-### Native Features
-- Window controls handled by OS
-- Notifications via Tauri notification API
-- System tray support available if needed
-
----
-
-## Code Style Guidelines
-
-### TypeScript/React
-
-- **Strict TypeScript**: No `any` types, define proper interfaces
-- **Functional Components**: Always use hooks for state/effects
-- **CSS Files**: Co-located with components (`.tsx` + `.css`)
-
-### Naming Conventions
-
-```
-Components:     PascalCase (e.g., NewsCard.tsx)
-CSS Files:      Same name as component (e.g., NewsCard.css)
-Hooks:         camelCase with 'use' prefix
-Types/Interfaces: PascalCase
-```
-
-### Import Order
-
-```typescript
-// 1. React
-import { useState, useEffect } from 'react';
-
-// 2. Tauri APIs
-import { load } from '@tauri-apps/plugin-store';
-
-// 3. Local imports
-import Header from './components/Header';
-import { newsArticles } from './data/news';
-import type { NewsArticle } from './types';
-
-// 4. Styles
-import './App.css';
-```
-
-### CSS Guidelines
-
-- Use CSS variables (defined in `index.css`)
-- Dark theme default (black/gray + blue/red accents)
-- Fonts: `JetBrains Mono` (mono), `Syne` (display)
-- Animations with `animation-delay` for stagger effects
-
----
-
-## Architecture
-
-### Directory Structure
+## Estructura del Proyecto
 
 ```
 src/
-├── main.tsx              # React entry point
-├── App.tsx               # Main app component
-├── App.css               # App-level styles
-├── index.css             # Global styles + CSS variables
-├── components/           # React components
-│   ├── Header.tsx/css
-│   ├── Sidebar.tsx/css
-│   ├── NewsCard.tsx/css
-│   ├── MetricsPanel.tsx/css
-│   ├── SummaryTicker.tsx/css
-│   └── Settings.tsx/css
+├── App.tsx              # Estado principal, layout, filtros
+├── components/
+│   ├── Header.tsx       # Barra superior: fecha, búsqueda, indicadores
+│   ├── Sidebar.tsx      # Navegación: categorías, tags, feeds
+│   ├── NewsCard.tsx     # Tarjeta de artículo (default/featured)
+│   ├── NewsDetail.tsx   # Modal de artículo completo
+│   ├── MetricsPanel.tsx# Ticker de mercado (crypto/stocks)
+│   ├── Settings.tsx     # Modal de configuración
+│   └── FeedsTab.tsx     # Gestión de feeds RSS
+├── hooks/
+│   └── useAppData.tsx   # Context API: categorías, tags, feeds CRUD
+├── services/
+│   └── rssService.ts    # Fetch RSS con fallbacks de proxy
 ├── data/
-│   └── news.ts           # Mock data + utilities
+│   └── news.ts          # Mock data + utilidades
 └── types/
-    └── index.ts          # TypeScript interfaces
+    └── index.ts         # Interfaces TypeScript
 ```
 
-### State Management
+---
 
-- Local state with `useState`
-- `useCallback` for event handlers
-- Tauri Store for persistent settings
-- No Redux/Zustand needed
+## Features Actuales
+
+### Core
+1. **Agregación RSS** - Fetch desde 4 feeds por defecto (Reuters, BBC, Al Jazeera, Defense News)
+2. **Filtro multi-capa** - Por categoría, tags, feed, búsqueda de texto
+3. **Categorización** - Geopolítica, Militar, Economía, Tecnología, Diplomacia, Seguridad
+4. **Tags dinámicos** - Extraídos automáticamente de artículos
+
+### UI/UX
+5. **NewsCard** - Vista previa con variantes default/featured
+6. **NewsDetail** - Modal con botón "Open Original"
+7. **Breaking News** - Indicador visual con badge pulsante
+8. **Live Ticker** - Panel inferior con crypto (CoinGecko) y stocks (S&P 500, NASDAQ, VIX, Oro, Petróleo)
+
+### Persistencia
+9. **Configuración persistente** - Categorías, tags, feeds guardados en Tauri Store
+10. **Artículos cacheados** - Carga inicial desde cache, refresh en background
 
 ---
 
-## Tauri Configuration
+## Flujo de Datos
 
-- Config: `src-tauri/tauri.conf.json`
-- Rust code: `src-tauri/src/lib.rs` & `main.rs`
-- Icons: `src-tauri/icons/`
-- Capabilities: `src-tauri/capabilities/default.json`
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Usuario (clic, búsqueda, refresh)                           │
+└─────────────────────────────┬───────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  App.tsx (Estado: articles, filters, selectedArticle)      │
+└─────────────────────────────┬───────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        ▼                     ▼                     ▼
+┌───────────────┐   ┌───────────────┐   ┌───────────────────┐
+│  Sidebar.tsx   │   │ useAppData.tsx│   │  rssService.ts    │
+│  (filtros UI)  │   │ (CRUD context)│   │  (fetch feeds)    │
+└───────────────┘   └───────────────┘   └───────────────────┘
+                                                  │
+                                                  ▼
+                                         ┌───────────────────┐
+                                         │  RSS Feeds (URL)  │
+                                         │  via Proxy APIs   │
+                                         └───────────────────┘
 
-### Tauri Plugins Used
-
-- `@tauri-apps/plugin-store` - Persistent storage
-- `@tauri-apps/plugin-shell` - Open external links
+┌─────────────────────────────────────────────────────────────┐
+│  Tauri Store (appdata.json)                                  │
+│  - categories, tags, feeds                                   │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Important Notes
+## Comportamiento Esperado
 
-1. **No Browser APIs**: Don't assume browser features (localStorage, etc.) - use Tauri APIs instead
-2. **Desktop UX**: Design for mouse/keyboard, not touch
-3. **Window Size**: Fixed minimum size, no responsive breakpoints needed
-4. **Settings**: Must persist via Tauri Store, not localStorage
-5. **Build Target**: Always test with `npm run dev:tauri` before building executable
+### Inicialización
+1. Cargar artículos cacheados desde Store
+2. Mostrar UI inmediatamente con datos cacheados
+3. Background refresh cada 5 min (configurable)
+
+### Filtros
+- Cambio de categoría → refiltra artículos instantly
+- Búsqueda → match en título/descripción (case-insensitive)
+- Tags → filtro múltiple (OR logic)
+- Feed → filtro por fuente específica
+
+### RSS Fetching
+- Proxies en orden: allorigins.win → corsproxy.io → codetabs.com
+- Timeout: 10 segundos por feed
+- Error en un feed no rompe otros
+
+### Persistencia
+- Categorías/Tags/Feeds: auto-guardado en Store al cambiar
+- Artículos: cache en Store para carga rápida
+
+### Links Externos
+- "Open Original" → Tauri shell plugin → abre en navegador del sistema
+
+---
+
+## Convenciones de Código
+
+### TypeScript
+- Strict mode, sin `any`
+- Interfaces para todos los tipos
+- Functional components + hooks
+
+### Nombrado
+```
+Components:  PascalCase (NewsCard.tsx)
+Hooks:      camelCase con 'use' (useAppData.tsx)
+Types:      PascalCase (NewsArticle)
+CSS:        Mismo nombre que componente (NewsCard.css)
+```
+
+### Import Order
+```typescript
+// 1. React
+// 2. Tauri APIs (@tauri-apps/plugin-*)
+// 3. Local imports (./components, ./hooks, ./types)
+// 4. Styles
+```
+
+---
+
+## Comandos de Build
+
+```bash
+npm run dev          # Vite dev server (localhost:1420)
+npm run dev:tauri     # Tauri dev mode (compila Rust + inicia app)
+npm run build         # Build frontend a dist/
+npm run build:tauri   # Build ejecutable desktop
+npm run build:all     # Frontend + Desktop
+
+# Output: src-tauri/target/release/iflandoor-news-dashboard.exe
+```
+
+---
+
+## Notas Importantes
+
+1. **No Browser APIs**: No usar localStorage/cookies (usar Tauri Store)
+2. **Desktop UX**: Diseñar para mouse/teclado, no touch
+3. **Window Size**: Min 1024x700, default 1400x900
+4. **Errores RSS**: No mostrar errores al usuario por cada feed fallido

@@ -26,29 +26,18 @@ interface FeedsTabProps {
 }
 
 export default function FeedsTab({ feeds, categories, onToggleFeedEnabled, onDeleteFeed, onUpdateFeed, onAddFeed }: FeedsTabProps) {
-  const [newFeed, setNewFeed] = useState({ name: '', url: '', categories: ['geopolitics'] as string[] });
+  const [newFeed, setNewFeed] = useState({ name: '', url: '', category: 'geopolitics' });
 
   const toggleFeedCategory = (feedId: string, categoryId: string) => {
     const feed = feeds.find(f => f.id === feedId);
     if (!feed) return;
-    const hasCategory = feed.categories.includes(categoryId);
-    const newCategories = hasCategory
-      ? feed.categories.filter(c => c !== categoryId)
-      : [...feed.categories, categoryId];
-    if (newCategories.length > 0) {
-      onUpdateFeed(feedId, { categories: newCategories });
+    if (feed.category !== categoryId) {
+      onUpdateFeed(feedId, { category: categoryId });
     }
   };
 
   const toggleNewFeedCategory = (categoryId: string) => {
-    const hasCategory = newFeed.categories.includes(categoryId);
-    if (hasCategory) {
-      if (newFeed.categories.length > 1) {
-        setNewFeed({ ...newFeed, categories: newFeed.categories.filter(c => c !== categoryId) });
-      }
-    } else {
-      setNewFeed({ ...newFeed, categories: [...newFeed.categories, categoryId] });
-    }
+    setNewFeed({ ...newFeed, category: categoryId });
   };
 
   const handleAddFeed = () => {
@@ -57,16 +46,11 @@ export default function FeedsTab({ feeds, categories, onToggleFeedEnabled, onDel
         id: Date.now().toString(),
         name: newFeed.name,
         url: newFeed.url,
-        categories: newFeed.categories,
+        category: newFeed.category,
         enabled: true,
       });
-      setNewFeed({ name: '', url: '', categories: ['geopolitics'] });
+      setNewFeed({ name: '', url: '', category: 'geopolitics' });
     }
-  };
-
-  const getCategoryColor = (catId: string) => {
-    const cat = categories.find(c => c.id === catId);
-    return cat?.color || 'blue';
   };
 
   return (
@@ -82,12 +66,12 @@ export default function FeedsTab({ feeds, categories, onToggleFeedEnabled, onDel
                   {categories.map((cat) => (
                     <button
                       key={cat.id}
-                      className={`feed-cat-btn ${feed.categories.includes(cat.id) ? 'active' : ''}`}
+                      className={`feed-cat-btn ${feed.category === cat.id ? 'active' : ''}`}
                       onClick={() => toggleFeedCategory(feed.id, cat.id)}
                       style={{
-                        backgroundColor: feed.categories.includes(cat.id) ? 'var(--accent-blue-glow)' : undefined,
-                        borderColor: feed.categories.includes(cat.id) ? 'var(--accent-blue)' : undefined,
-                        color: feed.categories.includes(cat.id) ? 'var(--accent-blue)' : undefined,
+                        backgroundColor: feed.category === cat.id ? 'var(--accent-blue-glow)' : undefined,
+                        borderColor: feed.category === cat.id ? 'var(--accent-blue)' : undefined,
+                        color: feed.category === cat.id ? 'var(--accent-blue)' : undefined,
                       }}
                     >
                       {cat.name}
@@ -137,12 +121,12 @@ export default function FeedsTab({ feeds, categories, onToggleFeedEnabled, onDel
             <button
               type="button"
               key={cat.id}
-              className={`feed-cat-btn ${newFeed.categories.includes(cat.id) ? 'active' : ''}`}
+              className={`feed-cat-btn ${newFeed.category === cat.id ? 'active' : ''}`}
               onClick={() => toggleNewFeedCategory(cat.id)}
               style={{
-                backgroundColor: newFeed.categories.includes(cat.id) ? 'var(--accent-blue-glow)' : undefined,
-                borderColor: newFeed.categories.includes(cat.id) ? 'var(--accent-blue)' : undefined,
-                color: newFeed.categories.includes(cat.id) ? 'var(--accent-blue)' : undefined,
+                backgroundColor: newFeed.category === cat.id ? 'var(--accent-blue-glow)' : undefined,
+                borderColor: newFeed.category === cat.id ? 'var(--accent-blue)' : undefined,
+                color: newFeed.category === cat.id ? 'var(--accent-blue)' : undefined,
               }}
             >
               {cat.name}
