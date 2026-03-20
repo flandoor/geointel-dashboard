@@ -190,6 +190,25 @@
   color: var(--accent-amber);
 }
 
+.bookmarks-clear-btn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bookmarks-clear-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--accent-red);
+}
+
 .tag-count {
   font-size: 9px;
   padding: 2px 6px;

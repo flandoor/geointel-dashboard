@@ -17,6 +17,7 @@ interface AppDataContextType {
   toggleFeedEnabled: (id: string) => void;
   toggleBookmark: (articleId: string) => void;
   isBookmarked: (articleId: string) => boolean;
+  clearAllBookmarks: () => void;
   resetToDefaults: () => void;
 }
 
@@ -156,6 +157,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return data.bookmarkedArticleIds.includes(articleId);
   }, [data.bookmarkedArticleIds]);
 
+  const clearAllBookmarks = useCallback(() => {
+    const newData = { ...data, bookmarkedArticleIds: [] };
+    saveData(newData);
+  }, [data, saveData]);
+
   return (
     <AppDataContext.Provider value={{
       data,
@@ -172,6 +178,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       toggleFeedEnabled,
       toggleBookmark,
       isBookmarked,
+      clearAllBookmarks,
       resetToDefaults,
     }}>
       {children}

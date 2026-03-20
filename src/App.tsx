@@ -57,7 +57,7 @@ function AppContent() {
   const hasFetched = useRef(false);
   const feedsCountRef = useRef(0);
 
-  const { data: appData, loading: dataLoading, toggleBookmark, isBookmarked } = useAppData();
+  const { data: appData, loading: dataLoading, toggleBookmark, isBookmarked, clearAllBookmarks } = useAppData();
 
   const fetchNews = useCallback(async (silent = false) => {
     if (dataLoading || appData.feeds.length === 0) return;
@@ -101,7 +101,7 @@ function AppContent() {
     }
   }, [dataLoading, appData.feeds.length, fetchNews]);
 
-  const activeFilters = (selectedCategory ? 1 : 0) + selectedTags.length + (selectedBookmarks ? 1 : 0);
+  const activeFilters = (selectedCategory ? 1 : 0) + selectedTags.length;
 
   const handleCategoryChange = (category: string | null) => {
     setSelectedCategory(category);
@@ -119,7 +119,6 @@ function AppContent() {
     setSelectedTags([]);
     setSelectedFeed(null);
     setSearchQuery('');
-    setSelectedBookmarks(false);
   };
 
   const handleFeedSelect = (feedId: string | null) => {
@@ -196,6 +195,7 @@ function AppContent() {
         onTagToggle={handleTagToggle}
         onFeedSelect={handleFeedSelect}
         onBookmarksToggle={() => { setSelectedBookmarks(!selectedBookmarks); setSelectedCategory(null); }}
+        onClearBookmarks={() => { clearAllBookmarks(); setSelectedBookmarks(false); }}
         articleCount={filteredArticles.length}
       />
 

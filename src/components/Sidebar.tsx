@@ -15,6 +15,7 @@ interface SidebarProps {
   onTagToggle: (tag: string) => void;
   onFeedSelect: (feedId: string | null) => void;
   onBookmarksToggle: () => void;
+  onClearBookmarks: () => void;
   articleCount?: number;
 }
 
@@ -31,6 +32,7 @@ export default function Sidebar({
   onTagToggle,
   onFeedSelect,
   onBookmarksToggle,
+  onClearBookmarks,
   articleCount = 0,
 }: SidebarProps) {
   const [isRSSExpanded, setIsRSSExpanded] = useState(false);
@@ -79,7 +81,19 @@ export default function Sidebar({
             </svg>
             <span>Bookmarks</span>
             {bookmarkCount > 0 && (
-              <span className="bookmarks-count">{bookmarkCount}</span>
+              <>
+                <span className="bookmarks-count">{bookmarkCount}</span>
+                <button 
+                  className="bookmarks-clear-btn"
+                  onClick={(e) => { e.stopPropagation(); onClearBookmarks(); }}
+                  title="Clear all bookmarks"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </>
             )}
           </button>
         </div>
