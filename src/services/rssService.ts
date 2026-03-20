@@ -198,7 +198,7 @@ export async function fetchRSSFeed(feed: FeedInfo): Promise<NewsArticle[]> {
         tags,
         publishedAt: parseXmlDate(pubDate),
         link: link.trim(),
-        readTime: Math.max(1, Math.ceil((title.length + summary.length) / 1000)),
+        readTime: Math.max(1, Math.ceil((title.length + (summary?.length || 0)) / 1000)),
       });
     });
 

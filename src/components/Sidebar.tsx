@@ -12,6 +12,7 @@ interface SidebarProps {
   onCategoryChange: (category: string | null) => void;
   onTagToggle: (tag: string) => void;
   onFeedSelect: (feedId: string | null) => void;
+  articleCount?: number;
 }
 
 export default function Sidebar({
@@ -24,6 +25,7 @@ export default function Sidebar({
   onCategoryChange,
   onTagToggle,
   onFeedSelect,
+  articleCount = 0,
 }: SidebarProps) {
   const [isRSSExpanded, setIsRSSExpanded] = useState(false);
 
@@ -76,7 +78,7 @@ export default function Sidebar({
                   <rect x="3" y="14" width="7" height="7" />
                 </svg>
                 <span>All News</span>
-                <span className="category-count">12</span>
+                <span className="category-count">{articleCount}</span>
               </button>
             </li>
             {categories.map((cat: CategoryInfo) => (

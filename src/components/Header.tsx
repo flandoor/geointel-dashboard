@@ -33,12 +33,13 @@ export default function Header({ activeFilters, onClearFilters, onSettingsClick,
   };
 
   const formatTime = (date: Date) => {
+    const offset = -date.getTimezoneOffset() / 60;
+    const sign = offset >= 0 ? '+' : '';
     return date.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
       minute: '2-digit',
       hour12: false,
-      timeZone: 'Etc/GMT+3'
-    }) + ' UTC-3';
+    }) + ` UTC${sign}${offset}`;
   };
 
   return (

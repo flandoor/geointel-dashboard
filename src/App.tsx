@@ -86,13 +86,15 @@ function AppContent() {
         feedsCountRef.current = appData.feeds.length;
         fetchNews(true);
       }
-      if (!hasFetched.current) {
-        hasFetched.current = true;
-        const interval = setInterval(() => fetchNews(true), 5 * 60 * 1000);
-        return () => clearInterval(interval);
-      }
     }
   }, [appData.feeds, dataLoading, fetchNews]);
+
+  useEffect(() => {
+    if (!dataLoading && appData.feeds.length > 0) {
+      const interval = setInterval(() => fetchNews(true), 5 * 60 * 1000);
+      return () => clearInterval(interval);
+    }
+  }, [dataLoading, appData.feeds.length, fetchNews]);
 
   const activeFilters = (selectedCategory ? 1 : 0) + selectedTags.length;
 
@@ -143,8 +145,11 @@ function AppContent() {
       const hasMatchingTag = article.tags.some((tag) => selectedTags.includes(tag));
       if (!hasMatchingTag) return false;
     }
-    if (selectedFeed && article.source !== appData.feeds.find(f => f.id === selectedFeed)?.name) {
-      return false;
+    if (selectedFeed) {
+      const selectedFeedObj = appData.feeds.find(f => f.id === selectedFeed);
+      if (!selectedFeedObj || article.source !== selectedFeedObj.name) {
+        return false;
+      }
     }
     return true;
   });
@@ -172,6 +177,7 @@ function AppContent() {
         onCategoryChange={handleCategoryChange}
         onTagToggle={handleTagToggle}
         onFeedSelect={handleFeedSelect}
+        articleCount={filteredArticles.length}
       />
 
       <main className="main-content">

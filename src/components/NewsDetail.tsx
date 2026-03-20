@@ -8,6 +8,12 @@ interface NewsDetailProps {
   onClose: () => void;
 }
 
+function sanitizeHtml(html: string): string {
+  const temp = document.createElement('div');
+  temp.textContent = html;
+  return temp.innerHTML;
+}
+
 export default function NewsDetail({ article, onClose }: NewsDetailProps) {
   const categoryColors: Record<string, string> = {
     geopolitics: 'var(--accent-blue)',
@@ -105,7 +111,7 @@ export default function NewsDetail({ article, onClose }: NewsDetailProps) {
           {article.content ? (
             <div 
               className="news-content-html"
-              dangerouslySetInnerHTML={{ __html: article.content }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.content) }}
             />
           ) : (
             <div className="news-detail-summary">
