@@ -1,50 +1,96 @@
+import { useState, useEffect } from 'react';
 import './MetricsPanel.css';
 
-interface MetricCard {
-  label: string;
-  value: string;
-  change: string;
-  trend: 'up' | 'down' | 'stable';
-  region: string;
+interface TickerItem {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  isCrypto: boolean;
 }
 
-const metrics: MetricCard[] = [
-  { label: 'Global Threat Index', value: '7.2', change: '+0.3', trend: 'up', region: 'WORLD' },
-  { label: 'Active Conflicts', value: '23', change: '+2', trend: 'up', region: 'MULTI' },
-  { label: 'NATO Readiness', value: '87%', change: '+5%', trend: 'up', region: 'EU' },
-  { label: 'Trade Disruption', value: '12', change: '-3', trend: 'down', region: 'GLOBAL' },
+const MOCK_STOCKS: TickerItem[] = [
+  { symbol: 'S&P 500', name: 'S&P 500', price: 5248.50, change: 0.42, isCrypto: false },
+  { symbol: 'NASDAQ', name: 'NASDAQ', price: 18392.75, change: 0.68, isCrypto: false },
+  { symbol: 'DOW', name: 'DOW', price: 39127.20, change: -0.15, isCrypto: false },
+  { symbol: 'VIX', name: 'VIX', price: 14.85, change: -2.30, isCrypto: false },
+  { symbol: 'GOLD', name: 'Gold', price: 2342.80, change: 0.31, isCrypto: false },
+  { symbol: 'OIL', name: 'Crude Oil', price: 82.45, change: -1.12, isCrypto: false },
+  { symbol: 'USD', name: 'USD Index', price: 104.32, change: 0.08, isCrypto: false },
+  { symbol: '10Y', name: 'US 10Y', price: 4.52, change: 0.02, isCrypto: false },
 ];
 
 export default function MetricsPanel() {
+  const [crypto, setCrypto] = useState<TickerItem[]>([]);
+
+  useEffect(() => {
+    const fetchCrypto = async () => {
+      try {
+        const response = await fetch(
+          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,ripple,cardano,polkadot,binancecoin,pancakeswap-token&vs_currencies=usd&include_24hr_change=true'
+        );
+        const data = await response.json();
+
+        const cryptoData: TickerItem[] = [
+          { symbol: 'BTC', name: 'Bitcoin', price: data.bitcoin?.usd || 0, change: data.bitcoin?.usd_24h_change || 0, isCrypto: true },
+          { symbol: 'ETH', name: 'Ethereum', price: data.ethereum?.usd || 0, change: data.ethereum?.usd_24h_change || 0, isCrypto: true },
+          { symbol: 'SOL', name: 'Solana', price: data.solana?.usd || 0, change: data.solana?.usd_24h_change || 0, isCrypto: true },
+          { symbol: 'XRP', name: 'Ripple', price: data.ripple?.usd || 0, change: data.ripple?.usd_24h_change || 0, isCrypto: true },
+          { symbol: 'ADA', name: 'Cardano', price: data.cardano?.usd || 0, change: data.cardano?.usd_24h_change || 0, isCrypto: true },
+          { symbol: 'DOT', name: 'Polkadot', price: data.polkadot?.usd || 0, change: data.polkadot?.usd_24h_change || 0, isCrypto: true },
+          { symbol: 'BNB', name: 'BNB', price: data.binancecoin?.usd || 0, change: data.binancecoin?.usd_24h_change || 0, isCrypto: true },
+          { symbol: 'CAKE', name: 'PancakeSwap', price: data['pancakeswap-token']?.usd || 0, change: data['pancakeswap-token']?.usd_24h_change || 0, isCrypto: true },
+        ];
+
+        setCrypto(cryptoData);
+      } catch (error) {
+        console.error('Error fetching crypto:', error);
+      }
+    };
+
+    fetchCrypto();
+    const interval = setInterval(fetchCrypto, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatPrice = (price: number, isCrypto: boolean) => {
+    if (isCrypto) {
+      if (price < 1) return `$${price.toFixed(4)}`;
+      return `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    if (price < 100) return price.toFixed(2);
+    if (price > 1000) return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return price.toFixed(2);
+  };
+
+  const formatChange = (change: number) => {
+    const sign = change >= 0 ? '+' : '';
+    return `${sign}${change.toFixed(2)}%`;
+  };
+
+  const allItems = [...crypto, ...MOCK_STOCKS];
+
   return (
-    <div className="metrics-panel">
-      <div className="metrics-header">
-        <h3 className="metrics-title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 3v18h18" />
-            <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" />
-          </svg>
-          Key Indicators
-        </h3>
-        <span className="metrics-timestamp">Updated 2m ago</span>
+    <div className="ticker-bar">
+      <div className="ticker-label">
+        <span className="ticker-label-dot" />
+        MARKETS
       </div>
-      
-      <div className="metrics-grid">
-        {metrics.map((metric, i) => (
-          <div key={i} className="metric-card">
-            <div className="metric-header">
-              <span className="metric-region">{metric.region}</span>
-              <span className={`metric-trend ${metric.trend}`}>
-                {metric.trend === 'up' && '↑'}
-                {metric.trend === 'down' && '↓'}
-                {metric.trend === 'stable' && '→'}
-                {metric.change}
+      <div className="ticker-track-container">
+        <div className="ticker-track">
+          {[...allItems, ...allItems].map((item, i) => (
+            <span key={i} className="ticker-token">
+              <span className="ticker-token-symbol">{item.symbol}</span>
+              <span className="ticker-token-price">
+                {formatPrice(item.price, item.isCrypto)}
               </span>
-            </div>
-            <div className="metric-value">{metric.value}</div>
-            <div className="metric-label">{metric.label}</div>
-          </div>
-        ))}
+              <span className={`ticker-token-change ${item.change >= 0 ? 'up' : 'down'}`}>
+                {formatChange(item.change)}
+              </span>
+              <span className="ticker-separator">|</span>
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );

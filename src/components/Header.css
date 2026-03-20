@@ -99,6 +99,27 @@
   font-family: var(--font-mono);
 }
 
+.search-clear {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--bg-secondary);
+  border: none;
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.search-clear:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
 .header-center {
   position: absolute;
   left: 50%;

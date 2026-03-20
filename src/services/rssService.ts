@@ -82,6 +82,35 @@ function getTextContent(element: Element | null, tag: string): string {
   return el?.textContent?.trim() || '';
 }
 
+const RSS_PROXIES = [
+  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+];
+
+async function fetchWithProxy(url: string): Promise<string | null> {
+  for (const proxyFn of RSS_PROXIES) {
+    try {
+      const proxyUrl = proxyFn(url);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      
+      const response = await fetch(proxyUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        const text = await response.text();
+        if (text && text.trim().length > 0) {
+          return text;
+        }
+      }
+    } catch {
+      console.log(`Proxy failed, trying next...`);
+    }
+  }
+  return null;
+}
+
 export async function fetchRSSFeed(feed: FeedInfo): Promise<NewsArticle[]> {
   if (!feed.enabled) {
     console.log(`[RSS] Feed "${feed.name}" is disabled, skipping`);
@@ -91,27 +120,10 @@ export async function fetchRSSFeed(feed: FeedInfo): Promise<NewsArticle[]> {
   console.log(`[RSS] Fetching feed: ${feed.name} (${feed.url})`);
   
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-      console.log(`[RSS] Timeout fetching ${feed.name}`);
-    }, 15000);
+    const text = await fetchWithProxy(feed.url);
     
-    const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(feed.url)}`, {
-      signal: controller.signal,
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      console.error(`[RSS] Failed to fetch ${feed.name}: ${response.status} ${response.statusText}`);
-      return [];
-    }
-
-    const text = await response.text();
-    
-    if (!text || text.trim().length === 0) {
-      console.error(`[RSS] Empty response from ${feed.name}`);
+    if (!text) {
+      console.error(`[RSS] All proxies failed for ${feed.name}`);
       return [];
     }
     
@@ -120,7 +132,7 @@ export async function fetchRSSFeed(feed: FeedInfo): Promise<NewsArticle[]> {
     
     const parseError = xml.querySelector('parsererror');
     if (parseError) {
-      console.error(`[RSS] XML parse error for ${feed.name}:`, parseError.textContent);
+      console.error(`[RSS] XML parse error for ${feed.name}`);
       return [];
     }
     
@@ -133,16 +145,45 @@ export async function fetchRSSFeed(feed: FeedInfo): Promise<NewsArticle[]> {
       if (index >= 10) return;
       
       const title = getTextContent(item, 'title') || item.getAttribute('title') || '';
-      const link = getTextContent(item, 'link') || item.getElementsByTagName('link')[0]?.textContent || '';
-      const description = getTextContent(item, 'description') || getTextContent(item, 'summary') || getTextContent(item, 'content') || '';
+      
+      let link = '';
+      const linkEl = item.querySelector('link');
+      if (linkEl) {
+        link = linkEl.textContent?.trim() || '';
+      }
+      if (!link) {
+        const linkElements = item.getElementsByTagName('link');
+        if (linkElements.length > 0) {
+          link = linkElements[0].textContent?.trim() || '';
+        }
+      }
+      if (!link) {
+        const guidEl = item.querySelector('guid');
+        if (guidEl) {
+          link = guidEl.textContent?.trim() || '';
+        }
+      }
+      if (!link) {
+        const enclosureEl = item.querySelector('enclosure');
+        if (enclosureEl) {
+          link = enclosureEl.getAttribute('url') || '';
+        }
+      }
+      
+      const contentEncoded = getTextContent(item, 'content:encoded') || getTextContent(item, 'content') || '';
+      const description = getTextContent(item, 'description') || getTextContent(item, 'summary') || '';
       const pubDate = getTextContent(item, 'pubDate') || getTextContent(item, 'published') || getTextContent(item, 'updated') || '';
       
       if (!title) return;
 
-      const summary = description
-        .replace(/<[^>]*>/g, '')
+      const fullContent = contentEncoded || description;
+      const cleanDescription = fullContent
+        .replace(/<[^>]*>/g, ' ')
         .replace(/&[a-z]+;/gi, ' ')
-        .substring(0, 300);
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const summary = cleanDescription;
 
       const category = getCategoryFromTitle(title, feed.category);
       const tags = extractTags(title, summary);
@@ -151,6 +192,7 @@ export async function fetchRSSFeed(feed: FeedInfo): Promise<NewsArticle[]> {
         id: generateId(),
         title: title.substring(0, 200),
         summary: summary || 'No summary available',
+        content: fullContent,
         source: feed.name,
         category,
         tags,

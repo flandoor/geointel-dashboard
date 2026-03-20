@@ -1,8 +1,27 @@
-import { useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { CategoryInfo, TagInfo, FeedInfo, AppData } from '../types';
 import { defaultCategories, defaultTags, defaultFeeds } from '../types';
 
+interface AppDataContextType {
+  data: AppData;
+  loading: boolean;
+  addCategory: (category: CategoryInfo) => void;
+  updateCategory: (id: string, updates: Partial<CategoryInfo>) => void;
+  deleteCategory: (id: string) => void;
+  addTag: (tag: TagInfo) => void;
+  updateTag: (id: string, updates: Partial<TagInfo>) => void;
+  deleteTag: (id: string) => void;
+  addFeed: (feed: FeedInfo) => void;
+  updateFeed: (id: string, updates: Partial<FeedInfo>) => void;
+  deleteFeed: (id: string) => void;
+  toggleFeedEnabled: (id: string) => void;
+  resetToDefaults: () => void;
+}
+
+const AppDataContext = createContext<AppDataContextType | null>(null);
+
 let store: any = null;
+let storeVersion = 0;
 
 async function initStore() {
   if (store) return store;
@@ -15,7 +34,7 @@ async function initStore() {
   }
 }
 
-export function useAppData() {
+export function AppDataProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData>({
     categories: defaultCategories,
     tags: defaultTags,
@@ -44,6 +63,7 @@ export function useAppData() {
     if (store) {
       await store.set('appData', newData);
       await store.save();
+      storeVersion++;
     }
   }, []);
 
@@ -118,19 +138,31 @@ export function useAppData() {
     saveData(defaultData);
   }, [saveData]);
 
-  return {
-    data,
-    loading,
-    addCategory,
-    updateCategory,
-    deleteCategory,
-    addTag,
-    updateTag,
-    deleteTag,
-    addFeed,
-    updateFeed,
-    deleteFeed,
-    toggleFeedEnabled,
-    resetToDefaults,
-  };
+  return (
+    <AppDataContext.Provider value={{
+      data,
+      loading,
+      addCategory,
+      updateCategory,
+      deleteCategory,
+      addTag,
+      updateTag,
+      deleteTag,
+      addFeed,
+      updateFeed,
+      deleteFeed,
+      toggleFeedEnabled,
+      resetToDefaults,
+    }}>
+      {children}
+    </AppDataContext.Provider>
+  );
+}
+
+export function useAppData() {
+  const context = useContext(AppDataContext);
+  if (!context) {
+    throw new Error('useAppData must be used within AppDataProvider');
+  }
+  return context;
 }

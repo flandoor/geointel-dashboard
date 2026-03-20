@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './Header.css';
 
 interface HeaderProps {
@@ -9,17 +9,44 @@ interface HeaderProps {
   onRefresh?: () => void;
   feedCount?: number;
   articleCount?: number;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
-export default function Header({ activeFilters, onClearFilters, onSettingsClick, isLoading, onRefresh, feedCount, articleCount }: HeaderProps) {
+export default function Header({ activeFilters, onClearFilters, onSettingsClick, isLoading, onRefresh, feedCount, articleCount, searchQuery = '', onSearchChange }: HeaderProps) {
   const [searchFocused, setSearchFocused] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', { 
+      month: 'long', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Etc/GMT+3'
+    }) + ' UTC-3';
+  };
 
   return (
     <header className="header">
       <div className="header-left">
         <div className="date-time">
-          <span className="date">March 19, 2026</span>
-          <span className="time">14:32 UTC</span>
+          <span className="date">{formatDate(currentTime)}</span>
+          <span className="time">{formatTime(currentTime)}</span>
         </div>
         
         <div className={`search-wrapper ${searchFocused ? 'focused' : ''}`}>
@@ -39,10 +66,22 @@ export default function Header({ activeFilters, onClearFilters, onSettingsClick,
             type="text"
             placeholder="Search intelligence..."
             className="search-input"
+            value={searchQuery}
+            onChange={(e) => onSearchChange?.(e.target.value)}
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}
           />
-          <kbd className="search-hint">Ctrl+K</kbd>
+          {searchQuery && (
+            <button 
+              className="search-clear"
+              onClick={() => onSearchChange?.('')}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
