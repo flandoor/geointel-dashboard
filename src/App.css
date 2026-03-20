@@ -79,6 +79,32 @@
   border: 1px solid var(--border-subtle);
 }
 
+.section-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.clear-filters-inline {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--accent-red-glow);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: var(--accent-red);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-filters-inline:hover {
+  background: var(--accent-red);
+  color: #fff;
+}
+
 .breaking-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

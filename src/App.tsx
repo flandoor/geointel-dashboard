@@ -192,8 +192,6 @@ function AppContent() {
 
       <main className="main-content">
         <Header 
-          activeFilters={activeFilters} 
-          onClearFilters={clearFilters}
           onSettingsClick={() => setSettingsOpen(true)}
           isLoading={loading}
           onRefresh={fetchNews}
@@ -241,7 +239,17 @@ function AppContent() {
                       : 'All News Feed'
                     }
                   </h2>
-                  <span className="count">{regularNews.length} stories</span>
+                  <div className="section-header-right">
+                    {activeFilters > 0 && (
+                      <button className="clear-filters-inline" onClick={clearFilters}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                        Clear ({activeFilters})
+                      </button>
+                    )}
+                    <span className="count">{regularNews.length} stories</span>
+                  </div>
                 </div>
                 <div className="news-grid">
                   {regularNews.map((article, index) => (
@@ -265,7 +273,17 @@ function AppContent() {
                       : 'All News Feed'
                     }
                   </h2>
-                  <span className="count">{filteredArticles.length} stories</span>
+                  <div className="section-header-right">
+                    {activeFilters > 0 && (
+                      <button className="clear-filters-inline" onClick={clearFilters}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                        Clear ({activeFilters})
+                      </button>
+                    )}
+                    <span className="count">{filteredArticles.length} stories</span>
+                  </div>
                 </div>
                 <div className="news-list">
                   {filteredArticles.map((article) => (
