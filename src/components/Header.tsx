@@ -11,9 +11,11 @@ interface HeaderProps {
   articleCount?: number;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
+  viewMode?: 'grid' | 'list';
+  onViewModeChange?: (mode: 'grid' | 'list') => void;
 }
 
-export default function Header({ activeFilters, onClearFilters, onSettingsClick, isLoading, onRefresh, feedCount, articleCount, searchQuery = '', onSearchChange }: HeaderProps) {
+export default function Header({ activeFilters, onClearFilters, onSettingsClick, isLoading, onRefresh, feedCount, articleCount, searchQuery = '', onSearchChange, viewMode = 'grid', onViewModeChange }: HeaderProps) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -125,6 +127,35 @@ export default function Header({ activeFilters, onClearFilters, onSettingsClick,
             <span className="stat-value">{articleCount ?? 0}</span>
             <span className="stat-label">Articles</span>
           </div>
+        </div>
+
+        <div className="view-toggle">
+          <button 
+            className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+            onClick={() => onViewModeChange?.('grid')}
+            title="Grid view"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+            </svg>
+          </button>
+          <button 
+            className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+            onClick={() => onViewModeChange?.('list')}
+            title="List view"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="8" y1="6" x2="21" y2="6" />
+              <line x1="8" y1="12" x2="21" y2="12" />
+              <line x1="8" y1="18" x2="21" y2="18" />
+              <line x1="3" y1="6" x2="3.01" y2="6" />
+              <line x1="3" y1="12" x2="3.01" y2="12" />
+              <line x1="3" y1="18" x2="3.01" y2="18" />
+            </svg>
+          </button>
         </div>
 
         <button className="settings-button" onClick={onSettingsClick}>

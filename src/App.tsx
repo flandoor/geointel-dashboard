@@ -3,6 +3,8 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import NewsCard from './components/NewsCard';
 import NewsDetail from './components/NewsDetail';
+import NewsListItem from './components/NewsListItem';
+import NewsPanel from './components/NewsPanel';
 import MetricsPanel from './components/MetricsPanel';
 import Settings from './components/Settings';
 import { AppDataProvider, useAppData } from './hooks/useAppData';
@@ -49,6 +51,8 @@ function AppContent() {
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
   const [selectedFeed, setSelectedFeed] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [detailOpen, setDetailOpen] = useState(false);
   const hasFetched = useRef(false);
   const feedsCountRef = useRef(0);
 
@@ -120,11 +124,17 @@ function AppContent() {
   };
 
   const handleArticleClick = (article: NewsArticle) => {
-    setSelectedArticle(article);
+    if (viewMode === 'list') {
+      setSelectedArticle(article);
+    } else {
+      setSelectedArticle(article);
+      setDetailOpen(true);
+    }
   };
 
   const handleCloseDetail = () => {
     setSelectedArticle(null);
+    setDetailOpen(false);
   };
 
   const filteredArticles = articles.filter((article) => {
@@ -191,55 +201,88 @@ function AppContent() {
           articleCount={articles.length}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
 
-        <div className="content">
+        <div className={`content ${viewMode === 'list' ? 'split-view' : ''}`}>
           <MetricsPanel />
 
-          {breakingNews.length > 0 && (
-            <section className="section">
-              <div className="section-header">
-                <h2 className="section-title">
-                  <span className="breaking-indicator" />
-                  Breaking News
-                </h2>
-                <span className="count">{breakingNews.length} stories</span>
-              </div>
-              <div className="breaking-grid">
-                {breakingNews.map((article, index) => (
-                  <NewsCard
-                    key={article.id}
-                    article={article}
-                    variant="featured"
-                    index={index}
-                    onClick={handleArticleClick}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
+          {viewMode === 'grid' ? (
+            <>
+              {breakingNews.length > 0 && (
+                <section className="section">
+                  <div className="section-header">
+                    <h2 className="section-title">
+                      <span className="breaking-indicator" />
+                      Breaking News
+                    </h2>
+                    <span className="count">{breakingNews.length} stories</span>
+                  </div>
+                  <div className="breaking-grid">
+                    {breakingNews.map((article, index) => (
+                      <NewsCard
+                        key={article.id}
+                        article={article}
+                        variant="featured"
+                        index={index}
+                        onClick={handleArticleClick}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
 
-          <section className="section">
-            <div className="section-header">
-              <h2 className="section-title">
-                {selectedCategory 
-                  ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} News`
-                  : 'All News Feed'
-                }
-              </h2>
-              <span className="count">{regularNews.length} stories</span>
+              <section className="section">
+                <div className="section-header">
+                  <h2 className="section-title">
+                    {selectedCategory 
+                      ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} News`
+                      : 'All News Feed'
+                    }
+                  </h2>
+                  <span className="count">{regularNews.length} stories</span>
+                </div>
+                <div className="news-grid">
+                  {regularNews.map((article, index) => (
+                    <NewsCard
+                      key={article.id}
+                      article={article}
+                      index={index + breakingNews.length}
+                      onClick={handleArticleClick}
+                    />
+                  ))}
+                </div>
+              </section>
+            </>
+          ) : (
+            <div className="split-view-container">
+              <div className="split-list">
+                <div className="section-header">
+                  <h2 className="section-title">
+                    {selectedCategory 
+                      ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} News`
+                      : 'All News Feed'
+                    }
+                  </h2>
+                  <span className="count">{filteredArticles.length} stories</span>
+                </div>
+                <div className="news-list">
+                  {filteredArticles.map((article) => (
+                    <NewsListItem
+                      key={article.id}
+                      article={article}
+                      isSelected={selectedArticle?.id === article.id}
+                      onClick={handleArticleClick}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="split-panel">
+                <NewsPanel article={selectedArticle} />
+              </div>
             </div>
-            <div className="news-grid">
-              {regularNews.map((article, index) => (
-                <NewsCard
-                  key={article.id}
-                  article={article}
-                  index={index + breakingNews.length}
-                  onClick={handleArticleClick}
-                />
-              ))}
-            </div>
-          </section>
+          )}
 
           {filteredArticles.length === 0 && (
             <div className="empty-state">
@@ -261,7 +304,7 @@ function AppContent() {
 
       <Settings isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
-      {selectedArticle && (
+      {selectedArticle && detailOpen && (
         <NewsDetail article={selectedArticle} onClose={handleCloseDetail} />
       )}
     </div>
