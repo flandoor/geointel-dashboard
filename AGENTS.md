@@ -1,4 +1,4 @@
-# GeoIntel Dashboard - Agent Guidelines
+# iflandoor news dashboard - Agent Guidelines
 
 ## IMPORTANT: This is a Desktop Application
 
@@ -30,7 +30,7 @@ npm run build:tauri       # Build Tauri desktop executable
 npm run build:all         # Build both frontend and desktop app
 
 # Executable location after build:
-# src-tauri/target/release/geopolitical-dashboard.exe (Windows)
+# src-tauri/target/release/iflandoor-news-dashboard.exe (Windows)
 ```
 
 ---

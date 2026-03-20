@@ -55,8 +55,8 @@ export default function Sidebar({
           </svg>
         </div>
         <div className="logo-text">
-          <span className="logo-title">GEOINTEL</span>
-          <span className="logo-subtitle">Intelligence Dashboard</span>
+          <span className="logo-title">iFlandöör</span>
+          <span className="logo-subtitle">News Dashboard</span>
         </div>
       </div>
 

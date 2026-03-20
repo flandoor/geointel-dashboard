@@ -218,7 +218,7 @@ function AppContent() {
               <h2 className="section-title">
                 {selectedCategory 
                   ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Intelligence`
-                  : 'All Intelligence Feed'
+                  : 'All News Feed'
                 }
               </h2>
               <span className="count">{regularNews.length} stories</span>
