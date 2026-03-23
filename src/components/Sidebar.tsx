@@ -40,6 +40,9 @@ export default function Sidebar({
   articleCount = 0,
 }: SidebarProps) {
   const [isRSSExpanded, setIsRSSExpanded] = useState(false);
+  const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(false);
+  const [isTagsExpanded, setIsTagsExpanded] = useState(false);
+  const [isDateRangeExpanded, setIsDateRangeExpanded] = useState(false);
 
   const iconMap: Record<string, JSX.Element> = {
     globe: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>,
@@ -103,79 +106,127 @@ export default function Sidebar({
         </div>
 
         <div className="nav-section">
-          <h3 className="nav-section-title">Categories</h3>
-          <ul className="category-list">
-            <li>
-              <button
-                className={`category-item ${selectedCategory === null ? 'active' : ''}`}
-                onClick={() => onCategoryChange(null)}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="3" width="7" height="7" />
-                  <rect x="14" y="3" width="7" height="7" />
-                  <rect x="14" y="14" width="7" height="7" />
-                  <rect x="3" y="14" width="7" height="7" />
-                </svg>
-                <span>All News</span>
-                <span className="category-count">{articleCount}</span>
-              </button>
-            </li>
-            {categories.map((cat: CategoryInfo) => (
-              <li key={cat.id}>
+          <button
+            className="category-header"
+            onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
+          >
+            <h3 className="nav-section-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+              </svg>
+              Categories
+            </h3>
+            <svg 
+              width="14" 
+              height="14" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+              className={`chevron ${isCategoriesExpanded ? 'expanded' : ''}`}
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          
+          {isCategoriesExpanded && (
+            <ul className="category-list">
+              <li>
                 <button
-                  className={`category-item ${selectedCategory === cat.id ? 'active' : ''}`}
-                  onClick={() => onCategoryChange(cat.id)}
-                  data-color={cat.color}
+                  className={`category-item ${selectedCategory === null ? 'active' : ''}`}
+                  onClick={() => onCategoryChange(null)}
                 >
-                  {getIcon(cat.icon)}
-                  <span>{cat.name}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                  </svg>
+                  <span>All News</span>
+                  <span className="category-count">{articleCount}</span>
                 </button>
               </li>
-            ))}
-          </ul>
+              {categories.map((cat: CategoryInfo) => (
+                <li key={cat.id}>
+                  <button
+                    className={`category-item ${selectedCategory === cat.id ? 'active' : ''}`}
+                    onClick={() => onCategoryChange(cat.id)}
+                    data-color={cat.color}
+                  >
+                    {getIcon(cat.icon)}
+                    <span>{cat.name}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="nav-section">
-          <h3 className="nav-section-title">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            Date Range
-          </h3>
-          <div className="date-filter">
-            <div className="date-input-group">
-              <label>From</label>
-              <input
-                type="date"
-                value={dateRange.start ? dateRange.start.toISOString().split('T')[0] : ''}
-                onChange={(e) => onDateRangeChange({ 
-                  start: e.target.value ? new Date(e.target.value) : null, 
-                  end: dateRange.end 
-                })}
-              />
-            </div>
-            <div className="date-input-group">
-              <label>To</label>
-              <input
-                type="date"
-                value={dateRange.end ? dateRange.end.toISOString().split('T')[0] : ''}
-                onChange={(e) => onDateRangeChange({ 
-                  start: dateRange.start, 
-                  end: e.target.value ? new Date(e.target.value) : null 
-                })}
-              />
-            </div>
-          </div>
-          {(dateRange.start || dateRange.end) && (
-            <button 
-              className="date-clear-btn"
-              onClick={() => onDateRangeChange({ start: null, end: null })}
+          <button 
+            className="rss-header"
+            onClick={() => setIsDateRangeExpanded(!isDateRangeExpanded)}
+          >
+            <h3 className="nav-section-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              Date Range
+            </h3>
+            <svg 
+              width="14" 
+              height="14" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+              className={`chevron ${isDateRangeExpanded ? 'expanded' : ''}`}
             >
-              Clear dates
-            </button>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          
+          {isDateRangeExpanded && (
+            <>
+              <div className="date-filter">
+                <div className="date-input-group">
+                  <label>From</label>
+                  <input
+                    type="date"
+                    value={dateRange.start ? dateRange.start.toISOString().split('T')[0] : ''}
+                    onChange={(e) => onDateRangeChange({ 
+                      start: e.target.value ? new Date(e.target.value) : null, 
+                      end: dateRange.end 
+                    })}
+                  />
+                </div>
+                <div className="date-input-group">
+                  <label>To</label>
+                  <input
+                    type="date"
+                    value={dateRange.end ? dateRange.end.toISOString().split('T')[0] : ''}
+                    onChange={(e) => onDateRangeChange({ 
+                      start: dateRange.start, 
+                      end: e.target.value ? new Date(e.target.value) : null 
+                    })}
+                  />
+                </div>
+              </div>
+              {(dateRange.start || dateRange.end) && (
+                <button 
+                  className="date-clear-btn"
+                  onClick={() => onDateRangeChange({ start: null, end: null })}
+                >
+                  Clear dates
+                </button>
+              )}
+            </>
           )}
         </div>
 
@@ -233,21 +284,43 @@ export default function Sidebar({
         </div>
 
         <div className="nav-section">
-          <h3 className="nav-section-title">
-            <span>Tags</span>
-            <span className="tag-count">{tags.length}</span>
-          </h3>
-          <div className="tag-cloud">
-            {tags.map((tag: TagInfo) => (
-              <button
-                key={tag.id}
-                className={`tag ${selectedTags.includes(tag.id) ? 'tag-active' : ''}`}
-                onClick={() => onTagToggle(tag.id)}
-              >
-                {tag.name}
-              </button>
-            ))}
-          </div>
+          <button 
+            className="rss-header"
+            onClick={() => setIsTagsExpanded(!isTagsExpanded)}
+          >
+            <h3 className="nav-section-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                <line x1="7" y1="7" x2="7.01" y2="7" />
+              </svg>
+              Tags
+            </h3>
+            <svg 
+              width="14" 
+              height="14" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+              className={`chevron ${isTagsExpanded ? 'expanded' : ''}`}
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          
+          {isTagsExpanded && (
+            <div className="tag-cloud">
+              {tags.map((tag: TagInfo) => (
+                <button
+                  key={tag.id}
+                  className={`tag ${selectedTags.includes(tag.id) ? 'tag-active' : ''}`}
+                  onClick={() => onTagToggle(tag.id)}
+                >
+                  {tag.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </nav>
     </aside>
