@@ -9,38 +9,9 @@ import MetricsPanel from './components/MetricsPanel';
 import Settings from './components/Settings';
 import { AppDataProvider, useAppData } from './hooks/useAppData';
 import { fetchAllFeeds } from './services/rssService';
+import { saveArticles, getArticles, cleanupOldArticles } from './services/articleDB';
 import type { NewsArticle } from './types';
 import './App.css';
-
-let articlesStore: any = null;
-
-async function initArticlesStore() {
-  if (articlesStore) return articlesStore;
-  try {
-    const { load } = await import('@tauri-apps/plugin-store');
-    articlesStore = await load('articles.json');
-    return articlesStore;
-  } catch {
-    return null;
-  }
-}
-
-async function loadSavedArticles(): Promise<NewsArticle[]> {
-  const store = await initArticlesStore();
-  if (store) {
-    const saved = await store.get('articles') as NewsArticle[] | null;
-    return saved || [];
-  }
-  return [];
-}
-
-async function saveArticles(articles: NewsArticle[]) {
-  const store = await initArticlesStore();
-  if (store) {
-    await store.set('articles', articles);
-    await store.save();
-  }
-}
 
 function AppContent() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
@@ -54,6 +25,7 @@ function AppContent() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedBookmarks, setSelectedBookmarks] = useState(false);
+  const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
   const hasFetched = useRef(false);
   const feedsCountRef = useRef(0);
 
@@ -64,8 +36,15 @@ function AppContent() {
     if (!silent) setLoading(true);
     try {
       const fetched = await fetchAllFeeds(appData.feeds);
-      setArticles(fetched);
-      await saveArticles(fetched);
+      setArticles(prev => {
+        const existingIds = new Set(prev.map(a => a.id));
+        const newArticles = fetched.filter(a => !existingIds.has(a.id));
+        if (newArticles.length > 0) {
+          saveArticles(newArticles);
+        }
+        return [...prev, ...newArticles];
+      });
+      await cleanupOldArticles(7);
     } catch (error) {
       console.error('Error fetching news:', error);
     } finally {
@@ -74,7 +53,7 @@ function AppContent() {
   }, [appData.feeds, dataLoading]);
 
   useEffect(() => {
-    loadSavedArticles().then(cached => {
+    getArticles().then(cached => {
       if (cached.length > 0) {
         setArticles(cached);
       }
@@ -119,6 +98,7 @@ function AppContent() {
     setSelectedTags([]);
     setSelectedFeed(null);
     setSearchQuery('');
+    setDateRange({ start: null, end: null });
   };
 
   const handleFeedSelect = (feedId: string | null) => {
@@ -166,6 +146,18 @@ function AppContent() {
     if (selectedBookmarks && !appData.bookmarkedArticleIds.includes(article.id)) {
       return false;
     }
+    if (dateRange.start || dateRange.end) {
+      const articleDateStr = new Date(article.publishedAt).toLocaleDateString('en-CA');
+      const startDateStr = dateRange.start?.toLocaleDateString('en-CA');
+      const endDateStr = dateRange.end?.toLocaleDateString('en-CA');
+      
+      if (startDateStr && articleDateStr < startDateStr) {
+        return false;
+      }
+      if (endDateStr && articleDateStr > endDateStr) {
+        return false;
+      }
+    }
     return true;
   });
 
@@ -196,6 +188,8 @@ function AppContent() {
         onFeedSelect={handleFeedSelect}
         onBookmarksToggle={() => { setSelectedBookmarks(!selectedBookmarks); setSelectedCategory(null); }}
         onClearBookmarks={() => { clearAllBookmarks(); setSelectedBookmarks(false); }}
+        onDateRangeChange={setDateRange}
+        dateRange={dateRange}
         articleCount={filteredArticles.length}
       />
 

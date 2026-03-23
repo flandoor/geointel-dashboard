@@ -11,11 +11,13 @@ interface SidebarProps {
   selectedFeed: string | null;
   selectedBookmarks: boolean;
   bookmarkCount: number;
+  dateRange: { start: Date | null; end: Date | null };
   onCategoryChange: (category: string | null) => void;
   onTagToggle: (tag: string) => void;
   onFeedSelect: (feedId: string | null) => void;
   onBookmarksToggle: () => void;
   onClearBookmarks: () => void;
+  onDateRangeChange: (range: { start: Date | null; end: Date | null }) => void;
   articleCount?: number;
 }
 
@@ -28,11 +30,13 @@ export default function Sidebar({
   selectedFeed,
   selectedBookmarks,
   bookmarkCount,
+  dateRange,
   onCategoryChange,
   onTagToggle,
   onFeedSelect,
   onBookmarksToggle,
   onClearBookmarks,
+  onDateRangeChange,
   articleCount = 0,
 }: SidebarProps) {
   const [isRSSExpanded, setIsRSSExpanded] = useState(false);
@@ -133,20 +137,46 @@ export default function Sidebar({
 
         <div className="nav-section">
           <h3 className="nav-section-title">
-            <span>Tags</span>
-            <span className="tag-count">{tags.length}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            Date Range
           </h3>
-          <div className="tag-cloud">
-            {tags.map((tag: TagInfo) => (
-              <button
-                key={tag.id}
-                className={`tag ${selectedTags.includes(tag.id) ? 'tag-active' : ''}`}
-                onClick={() => onTagToggle(tag.id)}
-              >
-                {tag.name}
-              </button>
-            ))}
+          <div className="date-filter">
+            <div className="date-input-group">
+              <label>From</label>
+              <input
+                type="date"
+                value={dateRange.start ? dateRange.start.toISOString().split('T')[0] : ''}
+                onChange={(e) => onDateRangeChange({ 
+                  start: e.target.value ? new Date(e.target.value) : null, 
+                  end: dateRange.end 
+                })}
+              />
+            </div>
+            <div className="date-input-group">
+              <label>To</label>
+              <input
+                type="date"
+                value={dateRange.end ? dateRange.end.toISOString().split('T')[0] : ''}
+                onChange={(e) => onDateRangeChange({ 
+                  start: dateRange.start, 
+                  end: e.target.value ? new Date(e.target.value) : null 
+                })}
+              />
+            </div>
           </div>
+          {(dateRange.start || dateRange.end) && (
+            <button 
+              className="date-clear-btn"
+              onClick={() => onDateRangeChange({ start: null, end: null })}
+            >
+              Clear dates
+            </button>
+          )}
         </div>
 
         <div className="nav-section">
@@ -200,6 +230,24 @@ export default function Sidebar({
               )}
             </div>
           )}
+        </div>
+
+        <div className="nav-section">
+          <h3 className="nav-section-title">
+            <span>Tags</span>
+            <span className="tag-count">{tags.length}</span>
+          </h3>
+          <div className="tag-cloud">
+            {tags.map((tag: TagInfo) => (
+              <button
+                key={tag.id}
+                className={`tag ${selectedTags.includes(tag.id) ? 'tag-active' : ''}`}
+                onClick={() => onTagToggle(tag.id)}
+              >
+                {tag.name}
+              </button>
+            ))}
+          </div>
         </div>
       </nav>
     </aside>

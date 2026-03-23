@@ -8,7 +8,7 @@ Aplicación de escritorio Tauri para monitoreo de noticias de inteligencia geopo
 ## Stack Tecnológico
 - **Frontend**: React 18 + TypeScript + Vite
 - **Desktop Shell**: Tauri 2.0 + Rust
-- **Persistencia**: @tauri-apps/plugin-store
+- **Persistencia**: @tauri-apps/plugin-store + Dexie.js (IndexedDB)
 - **URLs Externas**: @tauri-apps/plugin-shell
 
 ---
@@ -29,7 +29,8 @@ src/
 ├── hooks/
 │   └── useAppData.tsx   # Context API: categorías, tags, feeds CRUD
 ├── services/
-│   └── rssService.ts    # Fetch RSS con fallbacks de proxy
+│   ├── rssService.ts    # Fetch RSS con fallbacks de proxy
+│   └── articleDB.ts     # Persistencia articles con Dexie.js
 ├── data/
 │   └── news.ts          # Mock data + utilidades
 └── types/
@@ -54,7 +55,8 @@ src/
 
 ### Persistencia
 9. **Configuración persistente** - Categorías, tags, feeds guardados en Tauri Store
-10. **Artículos cacheados** - Carga inicial desde cache, refresh en background
+10. **Artículos cacheados** - Carga inicial desde DB IndexedDB, refresh en background
+11. **Histórico de noticias** - Búsqueda por fecha (hasta 7 días), categoría, tag, feed
 
 ---
 
@@ -86,6 +88,10 @@ src/
 ┌─────────────────────────────────────────────────────────────┐
 │  Tauri Store (appdata.json)                                  │
 │  - categories, tags, feeds                                   │
+├─────────────────────────────────────────────────────────────┤
+│  Dexie DB (IndexedDB)                                        │
+│  - articles (hasta 7 días de histórico)                      │
+│  - índice por: source, category, savedAt, publishedAt, tags  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -103,6 +109,7 @@ src/
 - Búsqueda → match en título/descripción (case-insensitive)
 - Tags → filtro múltiple (OR logic)
 - Feed → filtro por fuente específica
+- Fecha → rango de fechas (desde/hasta)
 
 ### RSS Fetching
 - Proxies en orden: allorigins.win → corsproxy.io → codetabs.com
