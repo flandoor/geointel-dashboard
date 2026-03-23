@@ -26,6 +26,7 @@ function AppContent() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedBookmarks, setSelectedBookmarks] = useState(false);
   const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
+  const [articleLimit, setArticleLimit] = useState(50);
   const hasFetched = useRef(false);
   const feedsCountRef = useRef(0);
 
@@ -162,7 +163,7 @@ function AppContent() {
   });
 
   const breakingNews = filteredArticles.filter((a) => a.isBreaking);
-  const regularNews = filteredArticles.filter((a) => !a.isBreaking);
+  const regularNews = filteredArticles.filter((a) => !a.isBreaking).slice(0, articleLimit);
 
   if (dataLoading) {
     return (
@@ -188,8 +189,6 @@ function AppContent() {
         onFeedSelect={handleFeedSelect}
         onBookmarksToggle={() => { setSelectedBookmarks(!selectedBookmarks); setSelectedCategory(null); }}
         onClearBookmarks={() => { clearAllBookmarks(); setSelectedBookmarks(false); }}
-        onDateRangeChange={setDateRange}
-        dateRange={dateRange}
         articleCount={filteredArticles.length}
       />
 
@@ -204,6 +203,19 @@ function AppContent() {
           onSearchChange={setSearchQuery}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
+          categories={appData.categories}
+          feeds={appData.feeds}
+          tags={appData.tags}
+          selectedCategory={selectedCategory}
+          selectedTags={selectedTags}
+          selectedFeed={selectedFeed}
+          dateRange={dateRange}
+          onCategoryChange={handleCategoryChange}
+          onTagToggle={handleTagToggle}
+          onFeedSelect={handleFeedSelect}
+          onDateRangeChange={setDateRange}
+          onClearAllFilters={clearFilters}
+          activeFilterCount={activeFilters}
         />
 
         <div className={`content ${viewMode === 'list' ? 'split-view' : ''}`}>
@@ -253,7 +265,15 @@ function AppContent() {
                         Clear ({activeFilters})
                       </button>
                     )}
-                    <span className="count">{regularNews.length} stories</span>
+                    <select 
+                      className="article-limit-inline"
+                      value={articleLimit}
+                      onChange={(e) => setArticleLimit(Number(e.target.value))}
+                    >
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
                   </div>
                 </div>
                 <div className="news-grid">

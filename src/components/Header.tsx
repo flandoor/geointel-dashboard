@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { CategoryInfo, TagInfo, FeedInfo } from '../types';
 import './Header.css';
 
 interface HeaderProps {
@@ -11,11 +12,48 @@ interface HeaderProps {
   onSearchChange?: (query: string) => void;
   viewMode?: 'grid' | 'list';
   onViewModeChange?: (mode: 'grid' | 'list') => void;
+  categories: CategoryInfo[];
+  feeds: FeedInfo[];
+  tags: TagInfo[];
+  selectedCategory: string | null;
+  selectedTags: string[];
+  selectedFeed: string | null;
+  dateRange: { start: Date | null; end: Date | null };
+  onCategoryChange: (category: string | null) => void;
+  onTagToggle: (tag: string) => void;
+  onFeedSelect: (feedId: string | null) => void;
+  onDateRangeChange: (range: { start: Date | null; end: Date | null }) => void;
+  onClearAllFilters?: () => void;
+  activeFilterCount: number;
 }
 
-export default function Header({ onSettingsClick, isLoading, onRefresh, feedCount, articleCount, searchQuery = '', onSearchChange, viewMode = 'grid', onViewModeChange }: HeaderProps) {
+export default function Header({ 
+  onSettingsClick, 
+  isLoading, 
+  onRefresh, 
+  feedCount, 
+  articleCount, 
+  searchQuery = '', 
+  onSearchChange, 
+  viewMode = 'grid', 
+  onViewModeChange,
+  categories,
+  feeds,
+  tags,
+  selectedCategory,
+  selectedTags,
+  selectedFeed,
+  dateRange,
+  onCategoryChange,
+  onTagToggle,
+  onFeedSelect,
+  onDateRangeChange,
+  onClearAllFilters,
+  activeFilterCount
+}: HeaderProps) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -41,6 +79,8 @@ export default function Header({ onSettingsClick, isLoading, onRefresh, feedCoun
       hour12: false,
     }) + ` UTC${sign}${offset}`;
   };
+
+  const hasActiveFilters = selectedCategory || selectedTags.length > 0 || selectedFeed || dateRange.start || dateRange.end;
 
   return (
     <header className="header">
@@ -83,6 +123,18 @@ export default function Header({ onSettingsClick, isLoading, onRefresh, feedCoun
               </svg>
             </button>
           )}
+          <button 
+            className={`filter-toggle ${hasActiveFilters ? 'active' : ''}`}
+            onClick={() => setShowFilters(!showFilters)}
+            title="Advanced filters"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+            </svg>
+            {activeFilterCount > 0 && (
+              <span className="filter-count">{activeFilterCount}</span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -154,6 +206,97 @@ export default function Header({ onSettingsClick, isLoading, onRefresh, feedCoun
           </svg>
         </button>
       </div>
+
+      {showFilters && (
+        <div className="filter-panel">
+          <div className="filter-section">
+            <label>Category</label>
+            <select 
+              value={selectedCategory || ''} 
+              onChange={(e) => onCategoryChange(e.target.value || null)}
+            >
+              <option value="">All Categories</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-section">
+            <label>Feed Source</label>
+            <select 
+              value={selectedFeed || ''} 
+              onChange={(e) => onFeedSelect(e.target.value || null)}
+            >
+              <option value="">All Feeds</option>
+              {feeds.filter(f => f.enabled).map(feed => (
+                <option key={feed.id} value={feed.id}>{feed.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-section">
+            <label>Date Range</label>
+            <div className="date-range-inputs">
+              <input
+                type="date"
+                value={dateRange.start ? dateRange.start.toISOString().split('T')[0] : ''}
+                onChange={(e) => onDateRangeChange({ 
+                  start: e.target.value ? new Date(e.target.value) : null, 
+                  end: dateRange.end 
+                })}
+                placeholder="From"
+              />
+              <span>to</span>
+              <input
+                type="date"
+                value={dateRange.end ? dateRange.end.toISOString().split('T')[0] : ''}
+                onChange={(e) => onDateRangeChange({ 
+                  start: dateRange.start, 
+                  end: e.target.value ? new Date(e.target.value) : null 
+                })}
+                placeholder="To"
+              />
+            </div>
+          </div>
+
+          <div className="filter-section">
+            <label>Tags</label>
+            <div className="dropdown-wrapper">
+              <button 
+                className={`dropdown-trigger ${selectedTags.length > 0 ? 'has-selection' : ''}`}
+                onClick={() => {
+                  const wrapper = document.querySelector('.tags-dropdown');
+                  wrapper?.classList.toggle('open');
+                }}
+              >
+                <span>{selectedTags.length > 0 ? `${selectedTags.length} selected` : 'Select tags'}</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              <div className="tags-dropdown dropdown-menu">
+                {tags.map(tag => (
+                  <label key={tag.id} className="dropdown-item">
+                    <input
+                      type="checkbox"
+                      checked={selectedTags.includes(tag.id)}
+                      onChange={() => onTagToggle(tag.id)}
+                    />
+                    <span>{tag.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {hasActiveFilters && (
+            <button className="clear-all-filters" onClick={onClearAllFilters}>
+              Clear all filters
+            </button>
+          )}
+        </div>
+      )}
     </header>
   );
 }

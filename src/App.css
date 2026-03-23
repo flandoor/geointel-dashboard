@@ -85,6 +85,23 @@
   gap: 10px;
 }
 
+.article-limit-inline {
+  height: 28px;
+  padding: 0 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.article-limit-inline:focus {
+  outline: none;
+  border-color: var(--border-accent);
+}
+
 .clear-filters-inline {
   display: flex;
   align-items: center;

@@ -1,7 +1,14 @@
 import type { NewsArticle, FeedInfo } from '../types';
 
-function generateId(): string {
-  return Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+function generateId(title: string, link: string): string {
+  const str = `${title}-${link}`.toLowerCase().trim();
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(36);
 }
 
 function getCategoryFromTitle(title: string, feedCategory: string): string {
@@ -189,7 +196,7 @@ export async function fetchRSSFeed(feed: FeedInfo): Promise<NewsArticle[]> {
       const tags = extractTags(title, summary);
 
       articles.push({
-        id: generateId(),
+        id: generateId(title, link),
         title: title.substring(0, 200),
         summary: summary || 'No summary available',
         content: fullContent,
