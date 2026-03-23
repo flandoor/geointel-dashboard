@@ -1,3 +1,5 @@
+export type ArticleStatus = 'unread' | 'archived' | 'bookmarked';
+
 export interface NewsArticle {
   id: string;
   title: string;
@@ -10,6 +12,9 @@ export interface NewsArticle {
   isBreaking?: boolean;
   readTime?: number;
   link?: string;
+  status?: ArticleStatus;
+  archivedAt?: number | null;
+  readAt?: number | null;
 }
 
 export interface CategoryInfo {

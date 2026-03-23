@@ -1,8 +1,11 @@
 import Dexie, { Table } from 'dexie';
-import type { NewsArticle } from '../types';
+import type { NewsArticle, ArticleStatus } from '../types';
 
 export interface DBArticle extends NewsArticle {
   savedAt: number;
+  status: ArticleStatus;
+  archivedAt: number | null;
+  readAt: number | null;
 }
 
 export class ArticleDB extends Dexie {
@@ -10,19 +13,60 @@ export class ArticleDB extends Dexie {
 
   constructor() {
     super('iflandoor-db');
-    this.version(1).stores({
-      articles: 'id, source, category, savedAt, publishedAt, *tags'
+    this.version(2).stores({
+      articles: 'id, source, category, savedAt, publishedAt, status, archivedAt, readAt, *tags'
     });
   }
 }
 
 export const db = new ArticleDB();
 
+export async function migrateArticles(): Promise<number> {
+  const articlesWithoutStatus = await db.articles
+    .filter(a => !a.status)
+    .toArray();
+  
+  if (articlesWithoutStatus.length === 0) return 0;
+  
+  const now = Date.now();
+  const ids = articlesWithoutStatus.map(a => a.id);
+  await db.articles.where('id').anyOf(ids).modify({ 
+    status: 'unread',
+    savedAt: now,
+    archivedAt: null,
+    readAt: null
+  });
+  
+  return articlesWithoutStatus.length;
+}
+
+export async function deduplicateArticles(): Promise<number> {
+  const allArticles = await db.articles.toArray();
+  const seenIds = new Set<string>();
+  const duplicates: string[] = [];
+  
+  for (const article of allArticles) {
+    if (seenIds.has(article.id)) {
+      duplicates.push(article.id);
+    } else {
+      seenIds.add(article.id);
+    }
+  }
+  
+  if (duplicates.length === 0) return 0;
+  
+  await db.articles.where('id').anyOf(duplicates).delete();
+  return duplicates.length;
+}
+
 export async function saveArticles(articles: NewsArticle[]): Promise<void> {
   const now = Date.now();
   const dbArticles: DBArticle[] = articles.map(article => ({
     ...article,
-    savedAt: now
+    savedAt: now,
+    status: 'unread',
+    archivedAt: null,
+    readAt: null
   }));
   
   await db.articles.bulkPut(dbArticles);
@@ -35,8 +79,18 @@ export async function getArticles(filters?: {
   startDate?: Date;
   endDate?: Date;
   searchQuery?: string;
+  status?: ArticleStatus | 'all';
+  excludeArchived?: boolean;
 }): Promise<NewsArticle[]> {
   let collection = db.articles.toCollection();
+
+  if (filters?.status && filters.status !== 'all') {
+    collection = collection.filter(a => a.status === filters.status);
+  }
+
+  if (filters?.excludeArchived) {
+    collection = collection.filter(a => a.status !== 'archived');
+  }
 
   if (filters?.category) {
     collection = collection.filter(a => a.category === filters.category);
@@ -92,22 +146,97 @@ export async function getArticlesByDateRange(days: number = 7): Promise<NewsArti
   );
 }
 
+export async function markArticleAsRead(id: string): Promise<void> {
+  await db.articles.update(id, { 
+    readAt: Date.now(),
+    status: 'archived'
+  });
+}
+
+export async function markArticlesAsRead(ids: string[]): Promise<void> {
+  const now = Date.now();
+  await db.articles.where('id').anyOf(ids).modify({ 
+    readAt: now,
+    status: 'archived',
+    archivedAt: now
+  });
+}
+
+export async function archiveReadArticles(): Promise<number> {
+  const readArticles = await db.articles
+    .where('readAt')
+    .above(0)
+    .filter(a => a.status === 'unread')
+    .toArray();
+  
+  if (readArticles.length === 0) return 0;
+  
+  const now = Date.now();
+  const ids = readArticles.map(a => a.id);
+  await db.articles.where('id').anyOf(ids).modify({ 
+    status: 'archived',
+    archivedAt: now
+  });
+  
+  return readArticles.length;
+}
+
+export async function archiveArticle(id: string): Promise<void> {
+  await db.articles.update(id, { 
+    status: 'archived',
+    archivedAt: Date.now()
+  });
+}
+
+export async function updateArticleStatus(id: string, status: ArticleStatus): Promise<void> {
+  const updates: Partial<DBArticle> = { status };
+  if (status === 'archived') {
+    updates.archivedAt = Date.now();
+  }
+  if (status === 'bookmarked') {
+    updates.archivedAt = null;
+  }
+  await db.articles.update(id, updates);
+}
+
 export async function cleanupOldArticles(daysToKeep: number = 7): Promise<number> {
   const cutoff = Date.now() - (daysToKeep * 24 * 60 * 60 * 1000);
-  const deleted = await db.articles
-    .where('savedAt')
-    .below(cutoff)
-    .delete();
   
-  return deleted;
+  const toDelete = await db.articles
+    .filter(a => 
+      a.status === 'archived' && 
+      a.archivedAt !== null && 
+      a.archivedAt < cutoff
+    )
+    .toArray();
+  
+  if (toDelete.length === 0) return 0;
+  
+  const ids = toDelete.map(a => a.id);
+  await db.articles.where('id').anyOf(ids).delete();
+  
+  return toDelete.length;
 }
 
 export async function getArticleCount(): Promise<number> {
   return db.articles.count();
 }
 
+export async function getUnreadCount(): Promise<number> {
+  return db.articles.where('status').equals('unread').count();
+}
+
+export async function getArchivedCount(): Promise<number> {
+  return db.articles.where('status').equals('archived').count();
+}
+
 export async function clearAllArticles(): Promise<void> {
   await db.articles.clear();
+}
+
+export async function resetDatabase(): Promise<void> {
+  await db.articles.clear();
+  console.log('[DB] Database cleared');
 }
 
 export async function getUniqueFeedSources(): Promise<string[]> {

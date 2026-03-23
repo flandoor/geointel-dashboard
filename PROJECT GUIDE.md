@@ -57,6 +57,28 @@ src/
 9. **Configuración persistente** - Categorías, tags, feeds guardados en Tauri Store
 10. **Artículos cacheados** - Carga inicial desde DB IndexedDB, refresh en background
 11. **Histórico de noticias** - Búsqueda por fecha (hasta 7 días), categoría, tag, feed
+12. **Sistema de estados de artículos** - unread → archived → cleanup (7 días) / bookmarked (nunca)
+
+### Article Lifecycle (Estados)
+```
+┌─────────────┐     leer     ┌─────────────┐   7 días   ┌──────────┐
+│   UNREAD    │ ───────────► │  ARCHIVED   │ ─────────► │ DELETED  │
+└─────────────┘              └─────────────┘           └──────────┘
+       │                          │
+       │ bookmark                 │ bookmark
+       ▼                          ▼
+┌─────────────┐              ┌─────────────┐
+│ BOOKMARKED  │◄─────────────│   ANY       │
+└─────────────┘              └─────────────┘
+     (nunca se borra)
+```
+
+**Flujo:**
+1. Nuevo artículo entra como `unread`
+2. Usuario lee → se marca como leído (localStorage) + en próximo refresh → `archived`
+3. Artículos `archived` viven 7 días, luego se borran
+4. Si están `bookmarked` → nunca se borran automáticamente
+5. Desmarcar bookmark → vuelve a `archived` (si fue leído) o `unread` (si no)
 
 ---
 
@@ -87,11 +109,15 @@ src/
 
 ┌─────────────────────────────────────────────────────────────┐
 │  Tauri Store (appdata.json)                                  │
-│  - categories, tags, feeds                                   │
+│  - categories, tags, feeds, bookmarkedArticleIds              │
 ├─────────────────────────────────────────────────────────────┤
 │  Dexie DB (IndexedDB)                                        │
-│  - articles (hasta 7 días de histórico)                      │
-│  - índice por: source, category, savedAt, publishedAt, tags  │
+│  - articles (hasta 7 días de histórico para archived)       │
+│  - índice por: source, category, savedAt, publishedAt,      │
+│    status, archivedAt, readAt, tags                          │
+│  - campos: id, title, summary, content, source, category,   │
+│    tags, publishedAt, isBreaking, readTime, link, status,    │
+│    archivedAt, readAt, savedAt                                │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -100,11 +126,14 @@ src/
 ## Comportamiento Esperado
 
 ### Inicialización
-1. Cargar artículos cacheados desde Store
-2. Mostrar UI inmediatamente con datos cacheados
-3. Background refresh cada 5 min (configurable)
+1. Cargar artículos cacheados desde IndexedDB
+2. Cargar IDs de artículos leídos desde localStorage
+3. Mostrar UI inmediatamente con datos cacheados
+4. Background refresh cada 5 min (configurable)
+5. En refresh: archivar artículos leídos + cleanup de old archived
 
 ### Filtros
+- Status → unread / archived / bookmarked / all (default: unread)
 - Cambio de categoría → refiltra artículos instantly
 - Búsqueda → match en título/descripción (case-insensitive)
 - Tags → filtro múltiple (OR logic)
@@ -118,7 +147,9 @@ src/
 
 ### Persistencia
 - Categorías/Tags/Feeds: auto-guardado en Store al cambiar
-- Artículos: cache en Store para carga rápida
+- Artículos leídos: trackeados en localStorage (readArticleIds)
+- Artículos: guardados en IndexedDB con status (unread/archived/bookmarked)
+- Artículos archived > 7 días: auto-deleted en cada refresh
 
 ### Links Externos
 - "Open Original" → Tauri shell plugin → abre en navegador del sistema
@@ -136,8 +167,13 @@ src/
 ```
 Components:  PascalCase (NewsCard.tsx)
 Hooks:      camelCase con 'use' (useAppData.tsx)
-Types:      PascalCase (NewsArticle)
+Types:      PascalCase (NewsArticle, ArticleStatus)
 CSS:        Mismo nombre que componente (NewsCard.css)
+```
+
+### Article Status Enum
+```typescript
+type ArticleStatus = 'unread' | 'archived' | 'bookmarked';
 ```
 
 ### Import Order

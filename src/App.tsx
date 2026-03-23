@@ -9,9 +9,25 @@ import MetricsPanel from './components/MetricsPanel';
 import Settings from './components/Settings';
 import { AppDataProvider, useAppData } from './hooks/useAppData';
 import { fetchAllFeeds } from './services/rssService';
-import { saveArticles, getArticles, cleanupOldArticles } from './services/articleDB';
-import type { NewsArticle } from './types';
+import { saveArticles, getArticles, cleanupOldArticles, archiveReadArticles, getUnreadCount, getArchivedCount, migrateArticles, deduplicateArticles, resetDatabase } from './services/articleDB';
+import type { NewsArticle, ArticleStatus } from './types';
 import './App.css';
+
+const READ_ARTICLES_KEY = 'iflandoor-read-articles';
+const DB_RESET_KEY = 'iflandoor-db-reset';
+
+function getReadArticleIds(): Set<string> {
+  try {
+    const stored = localStorage.getItem(READ_ARTICLES_KEY);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveReadArticleIds(ids: Set<string>): void {
+  localStorage.setItem(READ_ARTICLES_KEY, JSON.stringify([...ids]));
+}
 
 function AppContent() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
@@ -27,25 +43,56 @@ function AppContent() {
   const [selectedBookmarks, setSelectedBookmarks] = useState(false);
   const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
   const [articleLimit, setArticleLimit] = useState(50);
+  const [statusFilter, setStatusFilter] = useState<ArticleStatus | 'all'>('unread');
+  const [readArticleIds, setReadArticleIds] = useState<Set<string>>(new Set());
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [archivedCount, setArchivedCount] = useState(0);
   const hasFetched = useRef(false);
   const feedsCountRef = useRef(0);
+  const readTimerRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const { data: appData, loading: dataLoading, toggleBookmark, isBookmarked, clearAllBookmarks } = useAppData();
 
   const fetchNews = useCallback(async (silent = false) => {
-    if (dataLoading || appData.feeds.length === 0) return;
+    if (appData.feeds.length === 0) return;
     if (!silent) setLoading(true);
     try {
-      const fetched = await fetchAllFeeds(appData.feeds);
-      setArticles(prev => {
-        const existingIds = new Set(prev.map(a => a.id));
-        const newArticles = fetched.filter(a => !existingIds.has(a.id));
-        if (newArticles.length > 0) {
-          saveArticles(newArticles);
-        }
-        return [...prev, ...newArticles];
-      });
+      await migrateArticles();
+      const dedupCount = await deduplicateArticles();
+      if (dedupCount > 0) {
+        console.log(`[App] Deduplicated ${dedupCount} articles`);
+      }
+      
+      await archiveReadArticles();
       await cleanupOldArticles(7);
+      
+      const fetched = await fetchAllFeeds(appData.feeds);
+      
+      const existingIds = new Set<string>();
+      const articlesMap = new Map<string, NewsArticle>();
+      
+      const existing = await getArticles();
+      existing.forEach(a => {
+        articlesMap.set(a.id, a);
+        existingIds.add(a.id);
+      });
+      
+      const newArticles = fetched.filter(a => !existingIds.has(a.id));
+      if (newArticles.length > 0) {
+        await saveArticles(newArticles);
+        newArticles.forEach(a => articlesMap.set(a.id, a));
+      }
+      
+      const uniqueArticles = Array.from(articlesMap.values()).sort((a, b) => 
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+      );
+      
+      setArticles(uniqueArticles);
+      
+      const unread = await getUnreadCount();
+      const archived = await getArchivedCount();
+      setUnreadCount(unread);
+      setArchivedCount(archived);
     } catch (error) {
       console.error('Error fetching news:', error);
     } finally {
@@ -54,15 +101,42 @@ function AppContent() {
   }, [appData.feeds, dataLoading]);
 
   useEffect(() => {
-    getArticles().then(cached => {
-      if (cached.length > 0) {
-        setArticles(cached);
+    const stored = getReadArticleIds();
+    setReadArticleIds(stored);
+    
+    const loadArticles = async () => {
+      const needsReset = !localStorage.getItem(DB_RESET_KEY);
+      if (needsReset) {
+        await resetDatabase();
+        localStorage.setItem(DB_RESET_KEY, 'true');
+        console.log('[App] Database reset - will fetch fresh articles');
       }
+      
+      const cached = await getArticles();
+      if (cached.length > 0) {
+        const uniqueMap = new Map<string, NewsArticle>();
+        cached.forEach(a => {
+          if (!uniqueMap.has(a.id)) {
+            uniqueMap.set(a.id, a);
+          }
+        });
+        setArticles(Array.from(uniqueMap.values()).sort((a, b) => 
+          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+        ));
+      }
+      
+      const unread = await getUnreadCount();
+      const archived = await getArchivedCount();
+      setUnreadCount(unread);
+      setArchivedCount(archived);
+      
       if (!hasFetched.current) {
         hasFetched.current = true;
         fetchNews(true);
       }
-    });
+    };
+    
+    loadArticles();
   }, []);
 
   useEffect(() => {
@@ -107,6 +181,19 @@ function AppContent() {
   };
 
   const handleArticleClick = (article: NewsArticle) => {
+    if (!readArticleIds.has(article.id)) {
+      if (readTimerRef.current[article.id]) {
+        clearTimeout(readTimerRef.current[article.id]);
+      }
+      readTimerRef.current[article.id] = setTimeout(() => {
+        const newReadIds = new Set(readArticleIds);
+        newReadIds.add(article.id);
+        setReadArticleIds(newReadIds);
+        saveReadArticleIds(newReadIds);
+        delete readTimerRef.current[article.id];
+      }, 5000);
+    }
+    
     if (viewMode === 'list') {
       setSelectedArticle(article);
     } else {
@@ -116,11 +203,23 @@ function AppContent() {
   };
 
   const handleCloseDetail = () => {
+    Object.values(readTimerRef.current).forEach(timer => clearTimeout(timer));
+    readTimerRef.current = {};
     setSelectedArticle(null);
     setDetailOpen(false);
   };
 
   const filteredArticles = articles.filter((article) => {
+    const articleStatus = article.status ?? 'unread';
+    
+    if (statusFilter !== 'all' && articleStatus !== statusFilter) {
+      return false;
+    }
+    
+    if (selectedBookmarks && !appData.bookmarkedArticleIds.includes(article.id)) {
+      return false;
+    }
+    
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesSearch = 
@@ -143,9 +242,6 @@ function AppContent() {
       if (!selectedFeedObj || article.source !== selectedFeedObj.name) {
         return false;
       }
-    }
-    if (selectedBookmarks && !appData.bookmarkedArticleIds.includes(article.id)) {
-      return false;
     }
     if (dateRange.start || dateRange.end) {
       const articleDateStr = new Date(article.publishedAt).toLocaleDateString('en-CA');
@@ -198,7 +294,8 @@ function AppContent() {
           isLoading={loading}
           onRefresh={fetchNews}
           feedCount={appData.feeds.filter(f => f.enabled).length}
-          articleCount={articles.length}
+          unreadCount={unreadCount}
+          archivedCount={archivedCount}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           viewMode={viewMode}
@@ -210,6 +307,8 @@ function AppContent() {
           selectedTags={selectedTags}
           selectedFeed={selectedFeed}
           dateRange={dateRange}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
           onCategoryChange={handleCategoryChange}
           onTagToggle={handleTagToggle}
           onFeedSelect={handleFeedSelect}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { CategoryInfo, TagInfo, FeedInfo } from '../types';
+import type { CategoryInfo, TagInfo, FeedInfo, ArticleStatus } from '../types';
 import './Header.css';
 
 interface HeaderProps {
@@ -7,7 +7,8 @@ interface HeaderProps {
   isLoading?: boolean;
   onRefresh?: () => void;
   feedCount?: number;
-  articleCount?: number;
+  unreadCount?: number;
+  archivedCount?: number;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
   viewMode?: 'grid' | 'list';
@@ -19,6 +20,8 @@ interface HeaderProps {
   selectedTags: string[];
   selectedFeed: string | null;
   dateRange: { start: Date | null; end: Date | null };
+  statusFilter: ArticleStatus | 'all';
+  onStatusFilterChange: (status: ArticleStatus | 'all') => void;
   onCategoryChange: (category: string | null) => void;
   onTagToggle: (tag: string) => void;
   onFeedSelect: (feedId: string | null) => void;
@@ -32,7 +35,8 @@ export default function Header({
   isLoading, 
   onRefresh, 
   feedCount, 
-  articleCount, 
+  unreadCount = 0, 
+  archivedCount = 0,
   searchQuery = '', 
   onSearchChange, 
   viewMode = 'grid', 
@@ -44,6 +48,8 @@ export default function Header({
   selectedTags,
   selectedFeed,
   dateRange,
+  statusFilter,
+  onStatusFilterChange,
   onCategoryChange,
   onTagToggle,
   onFeedSelect,
@@ -160,13 +166,18 @@ export default function Header({
         
         <div className="stats">
           <div className="stat-item">
-            <span className="stat-value">{feedCount ?? 0}</span>
-            <span className="stat-label">Sources</span>
+            <span className="stat-value">{unreadCount}</span>
+            <span className="stat-label">Unread</span>
           </div>
           <div className="stat-divider" />
           <div className="stat-item">
-            <span className="stat-value">{articleCount ?? 0}</span>
-            <span className="stat-label">Articles</span>
+            <span className="stat-value">{archivedCount}</span>
+            <span className="stat-label">Archived</span>
+          </div>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value">{feedCount ?? 0}</span>
+            <span className="stat-label">Sources</span>
           </div>
         </div>
 
@@ -209,6 +220,19 @@ export default function Header({
 
       {showFilters && (
         <div className="filter-panel">
+          <div className="filter-section">
+            <label>Status</label>
+            <select 
+              value={statusFilter} 
+              onChange={(e) => onStatusFilterChange(e.target.value as ArticleStatus | 'all')}
+            >
+              <option value="unread">Unread</option>
+              <option value="archived">Archived</option>
+              <option value="bookmarked">Bookmarked</option>
+              <option value="all">All Articles</option>
+            </select>
+          </div>
+
           <div className="filter-section">
             <label>Category</label>
             <select 

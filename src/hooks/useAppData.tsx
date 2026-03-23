@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { CategoryInfo, TagInfo, FeedInfo, AppData } from '../types';
 import { defaultCategories, defaultTags, defaultFeeds } from '../types';
+import { updateArticleStatus } from '../services/articleDB';
 
 interface AppDataContextType {
   data: AppData;
@@ -146,11 +147,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const toggleBookmark = useCallback((articleId: string) => {
     const current = data.bookmarkedArticleIds;
-    const updated = current.includes(articleId)
+    const isCurrentlyBookmarked = current.includes(articleId);
+    const updated = isCurrentlyBookmarked
       ? current.filter(id => id !== articleId)
       : [...current, articleId];
     const newData = { ...data, bookmarkedArticleIds: updated };
     saveData(newData);
+    
+    updateArticleStatus(articleId, isCurrentlyBookmarked ? 'archived' : 'bookmarked');
   }, [data, saveData]);
 
   const isBookmarked = useCallback((articleId: string) => {
