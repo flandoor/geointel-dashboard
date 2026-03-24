@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import type { NewsArticle } from '../types';
 import { formatDate } from '../data/news';
+import DOMPurify from 'dompurify';
 import './NewsDetail.css';
 
 interface NewsDetailProps {
@@ -9,9 +10,13 @@ interface NewsDetailProps {
 }
 
 function sanitizeHtml(html: string): string {
-  const temp = document.createElement('div');
-  temp.textContent = html;
-  return temp.innerHTML;
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['p', 'b', 'strong', 'em', 'a', 'img', 'br', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code'],
+    ALLOWED_ATTR: ['href', 'src', 'alt', 'width', 'height', 'target', 'rel', 'title'],
+    ADD_ATTR: ['target'],
+    FORBID_TAGS: ['script', 'style', 'iframe', 'form', 'input'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],
+  });
 }
 
 export default function NewsDetail({ article, onClose }: NewsDetailProps) {
