@@ -24,6 +24,14 @@
   box-shadow: -3px 0 0 var(--accent-blue);
 }
 
+.news-list-item.read {
+  opacity: 0.6;
+}
+
+.news-list-item.read:hover {
+  opacity: 0.85;
+}
+
 .list-item-accent {
   width: 4px;
   flex-shrink: 0;
@@ -74,6 +82,33 @@
   color: var(--accent-amber);
   border-color: var(--accent-amber);
   background: rgba(217, 119, 6, 0.1);
+}
+
+.list-archive-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.list-archive-btn:hover {
+  border-color: var(--border-accent);
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+}
+
+.list-archive-btn.archived {
+  color: var(--accent-green);
+  border-color: var(--accent-green);
+  background: rgba(34, 197, 94, 0.1);
 }
 
 .list-item-meta {

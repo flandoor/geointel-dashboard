@@ -102,6 +102,26 @@
   border-color: var(--border-accent);
 }
 
+.clear-bookmarks-inline {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--accent-red-glow);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: var(--accent-red);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-bookmarks-inline:hover {
+  background: var(--accent-red);
+  color: #fff;
+}
+
 .clear-filters-inline {
   display: flex;
   align-items: center;

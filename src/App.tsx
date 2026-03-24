@@ -9,7 +9,7 @@ import MetricsPanel from './components/MetricsPanel';
 import Settings from './components/Settings';
 import { AppDataProvider, useAppData } from './hooks/useAppData';
 import { fetchAllFeeds } from './services/rssService';
-import { saveArticles, getArticles, cleanupOldArticles, archiveReadArticles, getUnreadCount, getArchivedCount, migrateArticles, deduplicateArticles, resetDatabase } from './services/articleDB';
+import { saveArticles, getArticles, cleanupOldArticles, archiveReadArticles, getUnreadCount, getArchivedCount, migrateArticles, deduplicateArticles, resetDatabase, markArticleAsRead, archiveArticle, updateArticleStatus } from './services/articleDB';
 import type { NewsArticle, ArticleStatus } from './types';
 import './App.css';
 
@@ -180,18 +180,19 @@ function AppContent() {
     setSelectedFeed(feedId);
   };
 
-  const handleArticleClick = (article: NewsArticle) => {
+  const handleArticleClick = async (article: NewsArticle) => {
     if (!readArticleIds.has(article.id)) {
       if (readTimerRef.current[article.id]) {
         clearTimeout(readTimerRef.current[article.id]);
       }
-      readTimerRef.current[article.id] = setTimeout(() => {
+      readTimerRef.current[article.id] = setTimeout(async () => {
         const newReadIds = new Set(readArticleIds);
         newReadIds.add(article.id);
         setReadArticleIds(newReadIds);
         saveReadArticleIds(newReadIds);
+        await markArticleAsRead(article.id);
         delete readTimerRef.current[article.id];
-      }, 5000);
+      }, 2000);
     }
     
     if (viewMode === 'list') {
@@ -208,6 +209,31 @@ function AppContent() {
     setSelectedArticle(null);
     setDetailOpen(false);
   };
+
+  const handleArchive = useCallback(async (articleId: string) => {
+    const article = articles.find(a => a.id === articleId);
+    if (!article) return;
+    
+    const newStatus = article.status === 'archived' ? 'unread' : 'archived';
+    
+    if (article.status === 'archived') {
+      await updateArticleStatus(articleId, 'unread');
+      setArticles(prev => prev.map(a => 
+        a.id === articleId ? { ...a, status: 'unread' } : a
+      ));
+      setArchivedCount(prev => Math.max(0, prev - 1));
+    } else {
+      await archiveArticle(articleId);
+      setArticles(prev => prev.map(a => 
+        a.id === articleId ? { ...a, status: 'archived' } : a
+      ));
+      setArchivedCount(prev => prev + 1);
+    }
+    
+    if (selectedArticle?.id === articleId) {
+      setSelectedArticle(prev => prev ? { ...prev, status: newStatus } : prev);
+    }
+  }, [articles, selectedArticle]);
 
   const filteredArticles = articles.filter((article) => {
     const articleStatus = article.status ?? 'unread';
@@ -280,11 +306,13 @@ function AppContent() {
         selectedFeed={selectedFeed}
         selectedBookmarks={selectedBookmarks}
         bookmarkCount={appData.bookmarkedArticleIds.length}
+        archivedCount={archivedCount}
+        selectedStatusFilter={statusFilter}
         onCategoryChange={handleCategoryChange}
         onTagToggle={handleTagToggle}
         onFeedSelect={handleFeedSelect}
         onBookmarksToggle={() => { setSelectedBookmarks(!selectedBookmarks); setSelectedCategory(null); }}
-        onClearBookmarks={() => { clearAllBookmarks(); setSelectedBookmarks(false); }}
+        onStatusFilterChange={setStatusFilter}
         articleCount={filteredArticles.length}
       />
 
@@ -341,6 +369,8 @@ function AppContent() {
                         onClick={handleArticleClick}
                         isBookmarked={isBookmarked(article.id)}
                         onBookmarkToggle={toggleBookmark}
+                        onArchive={handleArchive}
+                        isRead={readArticleIds.has(article.id)}
                       />
                     ))}
                   </div>
@@ -356,6 +386,14 @@ function AppContent() {
                     }
                   </h2>
                   <div className="section-header-right">
+                    {selectedBookmarks && appData.bookmarkedArticleIds.length > 0 && (
+                      <button 
+                        className="clear-bookmarks-inline"
+                        onClick={() => { clearAllBookmarks(); setSelectedBookmarks(false); }}
+                      >
+                        Clear Bookmarks
+                      </button>
+                    )}
                     {activeFilters > 0 && (
                       <button className="clear-filters-inline" onClick={clearFilters}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -384,6 +422,8 @@ function AppContent() {
                       onClick={handleArticleClick}
                       isBookmarked={isBookmarked(article.id)}
                       onBookmarkToggle={toggleBookmark}
+                      onArchive={handleArchive}
+                      isRead={readArticleIds.has(article.id)}
                     />
                   ))}
                 </div>
@@ -400,6 +440,14 @@ function AppContent() {
                     }
                   </h2>
                   <div className="section-header-right">
+                    {selectedBookmarks && appData.bookmarkedArticleIds.length > 0 && (
+                      <button 
+                        className="clear-bookmarks-inline"
+                        onClick={() => { clearAllBookmarks(); setSelectedBookmarks(false); }}
+                      >
+                        Clear Bookmarks
+                      </button>
+                    )}
                     {activeFilters > 0 && (
                       <button className="clear-filters-inline" onClick={clearFilters}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -420,6 +468,8 @@ function AppContent() {
                       onClick={handleArticleClick}
                       isBookmarked={isBookmarked(article.id)}
                       onBookmarkToggle={toggleBookmark}
+                      onArchive={handleArchive}
+                      isRead={readArticleIds.has(article.id)}
                     />
                   ))}
                 </div>
@@ -429,6 +479,7 @@ function AppContent() {
                   article={selectedArticle} 
                   isBookmarked={selectedArticle ? isBookmarked(selectedArticle.id) : false}
                   onBookmarkToggle={toggleBookmark}
+                  onArchive={handleArchive}
                 />
               </div>
             </div>
@@ -455,7 +506,13 @@ function AppContent() {
       <Settings isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       {selectedArticle && detailOpen && (
-        <NewsDetail article={selectedArticle} onClose={handleCloseDetail} />
+        <NewsDetail 
+          article={selectedArticle} 
+          onClose={handleCloseDetail}
+          isBookmarked={selectedArticle ? isBookmarked(selectedArticle.id) : false}
+          onBookmarkToggle={toggleBookmark}
+          onArchive={handleArchive}
+        />
       )}
     </div>
   );

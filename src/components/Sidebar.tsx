@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { CategoryInfo, TagInfo, FeedInfo } from '../types';
+import type { CategoryInfo, TagInfo, FeedInfo, ArticleStatus } from '../types';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -11,11 +11,13 @@ interface SidebarProps {
   selectedFeed: string | null;
   selectedBookmarks: boolean;
   bookmarkCount: number;
+  archivedCount: number;
+  selectedStatusFilter: ArticleStatus | 'all';
   onCategoryChange: (category: string | null) => void;
   onTagToggle: (tag: string) => void;
   onFeedSelect: (feedId: string | null) => void;
   onBookmarksToggle: () => void;
-  onClearBookmarks: () => void;
+  onStatusFilterChange: (status: ArticleStatus | 'all') => void;
   articleCount?: number;
 }
 
@@ -28,11 +30,13 @@ export default function Sidebar({
   selectedFeed,
   selectedBookmarks,
   bookmarkCount,
+  archivedCount,
+  selectedStatusFilter,
   onCategoryChange,
   onTagToggle,
   onFeedSelect,
   onBookmarksToggle,
-  onClearBookmarks,
+  onStatusFilterChange,
   articleCount = 0,
 }: SidebarProps) {
   const [isRSSExpanded, setIsRSSExpanded] = useState(false);
@@ -77,19 +81,22 @@ export default function Sidebar({
             </svg>
             <span>Bookmarks</span>
             {bookmarkCount > 0 && (
-              <>
-                <span className="bookmarks-count">{bookmarkCount}</span>
-                <button 
-                  className="bookmarks-clear-btn"
-                  onClick={(e) => { e.stopPropagation(); onClearBookmarks(); }}
-                  title="Clear all bookmarks"
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </>
+              <span className="bookmarks-count">{bookmarkCount}</span>
+            )}
+          </button>
+
+          <button
+            className={`archived-item ${selectedStatusFilter === 'archived' ? 'active' : ''}`}
+            onClick={() => onStatusFilterChange(selectedStatusFilter === 'archived' ? 'unread' : 'archived')}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="21 8 21 21 3 21 3 8" />
+              <rect x="1" y="3" width="22" height="5" />
+              <line x1="10" y1="12" x2="14" y2="12" />
+            </svg>
+            <span>Archived</span>
+            {archivedCount > 0 && (
+              <span className="archived-count">{archivedCount}</span>
             )}
           </button>
         </div>

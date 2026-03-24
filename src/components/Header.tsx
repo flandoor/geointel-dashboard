@@ -111,7 +111,7 @@ export default function Header({
           </svg>
           <input
             type="text"
-            placeholder="Search intelligence..."
+            placeholder="Search..."
             className="search-input"
             value={searchQuery}
             onChange={(e) => onSearchChange?.(e.target.value)}

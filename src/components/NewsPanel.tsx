@@ -3,12 +3,6 @@ import { formatDate } from '../data/news';
 import DOMPurify from 'dompurify';
 import './NewsPanel.css';
 
-interface NewsPanelProps {
-  article: NewsArticle | null;
-  isBookmarked?: boolean;
-  onBookmarkToggle?: (articleId: string) => void;
-}
-
 function sanitizeHtml(html: string): string {
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: ['p', 'b', 'strong', 'em', 'a', 'img', 'br', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code'],
@@ -19,7 +13,14 @@ function sanitizeHtml(html: string): string {
   });
 }
 
-export default function NewsPanel({ article, isBookmarked = false, onBookmarkToggle }: NewsPanelProps) {
+interface NewsPanelProps {
+  article: NewsArticle | null;
+  isBookmarked?: boolean;
+  onBookmarkToggle?: (articleId: string) => void;
+  onArchive?: (articleId: string) => void;
+}
+
+export default function NewsPanel({ article, isBookmarked = false, onBookmarkToggle, onArchive }: NewsPanelProps) {
   const categoryColors: Record<string, string> = {
     geopolitics: 'var(--accent-blue)',
     military: 'var(--accent-red)',
@@ -133,6 +134,20 @@ export default function NewsPanel({ article, isBookmarked = false, onBookmarkTog
           </svg>
           {isBookmarked ? 'Bookmarked' : 'Bookmark'}
         </button>
+        {onArchive && article && (
+          <button 
+            className={`panel-archive-btn ${article.status === 'archived' ? 'archived' : ''}`}
+            onClick={() => onArchive(article.id)}
+            title={article.status === 'archived' ? 'Unarchive' : 'Archive'}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={article.status === 'archived' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+              <polyline points="21,8 21,21 3,21 3,8" />
+              <rect x="1" y="3" width="22" height="5" />
+              <line x1="10" y1="12" x2="14" y2="12" />
+            </svg>
+            {article.status === 'archived' ? 'Unarchive' : 'Archive'}
+          </button>
+        )}
         {article?.link && (
           <button className="news-panel-read-btn" onClick={openOriginalArticle}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

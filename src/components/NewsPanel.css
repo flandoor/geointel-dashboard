@@ -216,6 +216,33 @@
   color: var(--accent-amber);
 }
 
+.panel-archive-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.panel-archive-btn:hover {
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+.panel-archive-btn.archived {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
 .news-panel-read-btn {
   display: inline-flex;
   align-items: center;

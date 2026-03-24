@@ -7,6 +7,9 @@ import './NewsDetail.css';
 interface NewsDetailProps {
   article: NewsArticle;
   onClose: () => void;
+  isBookmarked?: boolean;
+  onBookmarkToggle?: (articleId: string) => void;
+  onArchive?: (articleId: string) => void;
 }
 
 function sanitizeHtml(html: string): string {
@@ -19,7 +22,7 @@ function sanitizeHtml(html: string): string {
   });
 }
 
-export default function NewsDetail({ article, onClose }: NewsDetailProps) {
+export default function NewsDetail({ article, onClose, isBookmarked = false, onBookmarkToggle, onArchive }: NewsDetailProps) {
   const categoryColors: Record<string, string> = {
     geopolitics: 'var(--accent-blue)',
     military: 'var(--accent-red)',
@@ -86,6 +89,33 @@ export default function NewsDetail({ article, onClose }: NewsDetailProps) {
               BREAKING
             </span>
           )}
+          
+          <div className="news-detail-actions">
+            {onArchive && (
+              <button 
+                className={`detail-action-btn archive ${article.status === 'archived' ? 'active' : ''}`}
+                onClick={() => onArchive(article.id)}
+                title={article.status === 'archived' ? 'Unarchive' : 'Archive'}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill={article.status === 'archived' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                  <polyline points="21,8 21,21 3,21 3,8" />
+                  <rect x="1" y="3" width="22" height="5" />
+                  <line x1="10" y1="12" x2="14" y2="12" />
+                </svg>
+              </button>
+            )}
+            {onBookmarkToggle && (
+              <button 
+                className={`detail-action-btn bookmark ${isBookmarked ? 'active' : ''}`}
+                onClick={() => onBookmarkToggle(article.id)}
+                title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         <h1 className="news-detail-title">{article.title}</h1>

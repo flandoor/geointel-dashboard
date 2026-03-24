@@ -8,9 +8,11 @@ interface NewsListItemProps {
   onClick: (article: NewsArticle) => void;
   isBookmarked?: boolean;
   onBookmarkToggle?: (articleId: string) => void;
+  onArchive?: (articleId: string) => void;
+  isRead?: boolean;
 }
 
-export default function NewsListItem({ article, isSelected, onClick, isBookmarked = false, onBookmarkToggle }: NewsListItemProps) {
+export default function NewsListItem({ article, isSelected, onClick, isBookmarked = false, onBookmarkToggle, onArchive, isRead = false }: NewsListItemProps) {
   const categoryColors: Record<string, string> = {
     geopolitics: 'var(--accent-blue)',
     military: 'var(--accent-red)',
@@ -24,7 +26,7 @@ export default function NewsListItem({ article, isSelected, onClick, isBookmarke
 
   return (
     <article 
-      className={`news-list-item ${isSelected ? 'selected' : ''}`}
+      className={`news-list-item ${isSelected ? 'selected' : ''} ${isRead ? 'read' : ''}`}
       onClick={() => onClick(article)}
     >
       <div className="list-item-accent" style={{ background: categoryColor }} />
@@ -52,6 +54,19 @@ export default function NewsListItem({ article, isSelected, onClick, isBookmarke
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
               </svg>
             </button>
+            {onArchive && (
+              <button 
+                className={`list-archive-btn ${article.status === 'archived' ? 'archived' : ''}`}
+                onClick={(e) => { e.stopPropagation(); onArchive(article.id); }}
+                title={article.status === 'archived' ? 'Unarchive' : 'Archive'}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill={article.status === 'archived' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                  <polyline points="21,8 21,21 3,21 3,8" />
+                  <rect x="1" y="3" width="22" height="5" />
+                  <line x1="10" y1="12" x2="14" y2="12" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
 
